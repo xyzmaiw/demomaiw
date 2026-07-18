@@ -46,6 +46,7 @@ export function createMediaRecorder(stream: MediaStream): MediaRecorderControlle
   const bitsPerSecond = suggestVideoBitsPerSecond(
     settings.width || 1920,
     settings.height || 1080,
+    'capture',
   )
 
   const recorder = new MediaRecorder(stream, {
@@ -65,7 +66,8 @@ export function createMediaRecorder(stream: MediaStream): MediaRecorderControlle
       accumulatedMs = 0
       pauseStartedAt = 0
       startedAt = performance.now()
-      recorder.start(250)
+      // Larger timeslice = less GC churn / overhead while recording
+      recorder.start(1000)
     },
     pause() {
       if (recorder.state === 'recording') {

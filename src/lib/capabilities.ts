@@ -17,8 +17,21 @@ export const MP4_MIME_CANDIDATES = [
 ] as const
 
 /**
- * Quality-first ladder for capture + export when format is Auto.
- * AV1/VP9 for efficiency, then H.264/MP4 (Safari + hardware encode), then VP8.
+ * Capture prefers hardware-friendly codecs first — AV1 looks great but encodes slowly
+ * and makes live recording feel laggy on many machines.
+ */
+export const CAPTURE_MIME_CANDIDATES = [
+  ...MP4_MIME_CANDIDATES,
+  'video/webm;codecs=vp9',
+  'video/webm;codecs=av01',
+  'video/webm;codecs=av1',
+  'video/webm;codecs=vp8',
+  'video/webm',
+] as const
+
+/**
+ * Quality-first ladder (legacy / explicit WebM preference).
+ * AV1/VP9 for efficiency, then H.264/MP4, then VP8.
  */
 export const QUALITY_MIME_CANDIDATES = [
   ...WEBM_MIME_CANDIDATES.slice(0, 3), // av01, av1, vp9
@@ -65,11 +78,11 @@ export function selectSupportedMimeType(
   return null
 }
 
-/** Best quality codec for live capture (AV1 → VP9 → H.264 → VP8). */
+/** Best capture codec — prefer fast/hardware encode to avoid laggy recordings. */
 export function selectCaptureMimeType(
   isTypeSupported: DefaultIsTypeSupported = defaultIsTypeSupported,
 ): string | null {
-  for (const mime of QUALITY_MIME_CANDIDATES) {
+  for (const mime of CAPTURE_MIME_CANDIDATES) {
     try {
       if (isTypeSupported(mime)) return mime
     } catch {
@@ -105,13 +118,26 @@ export function formatLabelForMimeType(mimeType: string): string {
   return `${container} (${codec})`
 }
 
-/** Rough target bitrate from output size — keeps exports snappy without looking mushy. */
-export function suggestVideoBitsPerSecond(width: number, height: number): number {
+export type BitratePurpose = 'capture' | 'export'
+
+/**
+ * Screen UI needs higher bitrates than camera footage — text and edges fall apart
+ * quickly below ~0.1 bpp at 30fps. Prefer sharp demos over small files.
+ */
+export function suggestVideoBitsPerSecond(
+  width: number,
+  height: number,
+  purpose: BitratePurpose = 'capture',
+): number {
   const pixels = Math.max(1, width * height)
-  if (pixels >= 1920 * 1080) return 8_000_000
-  if (pixels >= 1280 * 720) return 5_000_000
-  if (pixels >= 854 * 480) return 3_500_000
-  return 2_500_000
+  // ~bits per pixel per second targets (screen content)
+  const bpp = purpose === 'export' ? 0.12 : 0.1
+  const fps = 30
+  const estimated = Math.round(pixels * bpp * fps)
+  const min =
+    pixels >= 1920 * 1080 ? 12_000_000 : pixels >= 1280 * 720 ? 8_000_000 : 5_000_000
+  const max = purpose === 'export' ? 28_000_000 : 24_000_000
+  return Math.min(max, Math.max(min, estimated))
 }
 
 export function detectBrowserCapabilities() {

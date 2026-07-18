@@ -81,6 +81,160 @@ function resolveVideoExportPreference(project: CaptureProject): VideoContainerPr
   return 'auto'
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function prepareExportContext(
+  ctx: CanvasRenderingContext2D,
+): void {
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+}
+
+type CanvasCaptureTrack = MediaStreamTrack & { requestFrame?: () => void }
+
+/**
+ * Draw frames by playing the source (decoded frames) instead of seeking every tick.
+ * Much sharper and less choppy than seek-per-frame re-encode.
+ * Experimental freezes are held by pausing and repeating the frame.
+ */
+async function renderExportTimeline(options: {
+  video: HTMLVideoElement
+  ctx: CanvasRenderingContext2D
+  canvasTrack: CanvasCaptureTrack | null
+  project: CaptureProject
+  sourceWidth: number
+  sourceHeight: number
+  size: { width: number; height: number }
+  sourceDurationMs: number
+  outputDurationMs: number
+  mapOutputToSource: (outputMs: number) => number
+  fps: number
+  isCancelled: () => boolean
+  onProgress?: (progress: ExportProgress) => void
+}): Promise<void> {
+  const {
+    video,
+    ctx,
+    canvasTrack,
+    project,
+    sourceWidth,
+    sourceHeight,
+    size,
+    sourceDurationMs,
+    outputDurationMs,
+    mapOutputToSource,
+    fps,
+    isCancelled,
+    onProgress,
+  } = options
+
+  const frameSource = createVideoFrameSource(video)
+  const frameDuration = 1000 / fps
+  const freezes = project.events
+    .filter((e) => e.type === 'freeze')
+    .sort((a, b) => a.startTimeMs - b.startTimeMs)
+
+  const drawAtSourceTime = (sourceTimeMs: number, requestFrame: boolean) => {
+    prepareExportContext(ctx)
+    renderFrame(ctx, frameSource, {
+      timeMs: sourceTimeMs,
+      outputWidth: size.width,
+      outputHeight: size.height,
+      aspectRatio: project.aspectRatio,
+      frameMode: project.frameMode,
+      crop: project.crop,
+      events: project.events,
+      reducedMotion: false,
+      backgroundColor: project.exportSettings.backgroundColor,
+      roundedFrame: project.exportSettings.roundedFrame,
+      mediaKind: 'video',
+      sourceWidth,
+      sourceHeight,
+    })
+    if (requestFrame) canvasTrack?.requestFrame?.()
+  }
+
+  // Prefer realtime playback when freezes are absent — best quality path.
+  if (freezes.length === 0 && typeof video.requestVideoFrameCallback === 'function') {
+    video.currentTime = 0
+    await waitForSeek(video)
+
+    await new Promise<void>((resolve, reject) => {
+      let settled = false
+      const finish = () => {
+        if (settled) return
+        settled = true
+        resolve()
+      }
+      const fail = (err: unknown) => {
+        if (settled) return
+        settled = true
+        reject(err instanceof Error ? err : new Error(String(err)))
+      }
+
+      const onFrame: VideoFrameRequestCallback = (_now, metadata) => {
+        if (isCancelled()) {
+          video.pause()
+          fail(new CaptureError('EXPORT_CANCELLED', 'Export was cancelled.'))
+          return
+        }
+        const timeMs = Math.min(sourceDurationMs, metadata.mediaTime * 1000)
+        drawAtSourceTime(timeMs, false)
+        onProgress?.({
+          progress: 0.02 + 0.92 * (timeMs / Math.max(1, sourceDurationMs)),
+          phase: 'rendering',
+        })
+        if (video.ended || timeMs >= sourceDurationMs - frameDuration * 0.5) {
+          finish()
+          return
+        }
+        video.requestVideoFrameCallback(onFrame)
+      }
+
+      video.addEventListener('ended', finish, { once: true })
+      video.addEventListener(
+        'error',
+        () => fail(new CaptureError('EXPORT_FAILED', 'Video export failed unexpectedly.')),
+        { once: true },
+      )
+      video.requestVideoFrameCallback(onFrame)
+      void video.play().catch((err) => fail(err))
+    })
+
+    video.pause()
+    await sleep(frameDuration * 2)
+    return
+  }
+
+  // Fallback / freeze path: paced frames with minimal seeking
+  let lastSeek = -1
+  const frameCount = Math.max(1, Math.ceil((outputDurationMs / 1000) * fps))
+  for (let i = 0; i < frameCount; i++) {
+    if (isCancelled()) {
+      throw new CaptureError('EXPORT_CANCELLED', 'Export was cancelled.')
+    }
+    const outputTimeMs = Math.min(outputDurationMs, i * frameDuration)
+    const sourceTimeMs = mapOutputToSource(outputTimeMs)
+    const seekTo = Math.min(video.duration || sourceDurationMs / 1000, sourceTimeMs / 1000)
+
+    if (Math.abs(lastSeek - seekTo) > 0.02) {
+      video.currentTime = seekTo
+      await waitForSeek(video)
+      lastSeek = seekTo
+    }
+
+    drawAtSourceTime(sourceTimeMs, true)
+    onProgress?.({
+      progress: 0.02 + (0.92 * (i + 1)) / frameCount,
+      phase: 'rendering',
+    })
+
+    await sleep(frameDuration)
+  }
+}
+
 export function exportVideo(
   project: CaptureProject,
   onProgress?: (progress: ExportProgress) => void,
@@ -150,10 +304,11 @@ export function exportVideo(
       )
       canvas.width = size.width
       canvas.height = size.height
-      const ctx = canvas.getContext('2d')
+      const ctx = canvas.getContext('2d', { alpha: false })
       if (!ctx) {
         throw new CaptureError('CANVAS_FAILED', 'Unable to create an export canvas.')
       }
+      prepareExportContext(ctx)
 
       const fps = project.exportSettings.fps
       const sourceDurationMs =
@@ -172,11 +327,15 @@ export function exportVideo(
         sourceDurationMs,
       )
 
-      canvasStream = canvas.captureStream(fps)
+      const hasFreezes = project.events.some((e) => e.type === 'freeze')
+      // Realtime playback: let the browser sample the canvas at fps.
+      // Freeze/seek path: manual requestFrame so each drawn frame is captured once.
+      canvasStream = canvas.captureStream(hasFreezes ? 0 : fps)
+      const canvasTrack = canvasStream.getVideoTracks()[0] as CanvasCaptureTrack | undefined
       const chunks: BlobPart[] = []
       recorder = new MediaRecorder(canvasStream, {
         mimeType,
-        videoBitsPerSecond: suggestVideoBitsPerSecond(size.width, size.height),
+        videoBitsPerSecond: suggestVideoBitsPerSecond(size.width, size.height, 'export'),
       })
 
       recorder.ondataavailable = (event) => {
@@ -202,57 +361,32 @@ export function exportVideo(
         }
       })
 
-      recorder.start(200)
+      recorder.start(1000)
       onProgress?.({ progress: 0.02, phase: 'rendering' })
 
-      const frameSource = createVideoFrameSource(video)
-      const frameCount = Math.max(1, Math.ceil((outputDurationMs / 1000) * fps))
-      const frameDuration = 1000 / fps
-
-      for (let i = 0; i < frameCount; i++) {
-        if (cancelled) {
-          recorder.stop()
-          for (const track of canvasStream.getTracks()) track.stop()
-          video.removeAttribute('src')
-          video.load()
-          onProgress?.({ progress: i / frameCount, phase: 'cancelled' })
-          throw new CaptureError('EXPORT_CANCELLED', 'Export was cancelled.')
-        }
-
-        const outputTimeMs = Math.min(outputDurationMs, i * frameDuration)
-        const sourceTimeMs = mapOutputToSource(outputTimeMs)
-        const seekTo = Math.min(video.duration || sourceDurationMs / 1000, sourceTimeMs / 1000)
-
-        if (Math.abs(video.currentTime - seekTo) > 0.001) {
-          video.currentTime = seekTo
-          await waitForSeek(video)
-        }
-
-        renderFrame(ctx, frameSource, {
-          timeMs: sourceTimeMs,
-          outputWidth: size.width,
-          outputHeight: size.height,
-          aspectRatio: project.aspectRatio,
-          frameMode: project.frameMode,
-          crop: project.crop,
-          events: project.events,
-          reducedMotion: false,
-          backgroundColor: project.exportSettings.backgroundColor,
-          roundedFrame: project.exportSettings.roundedFrame,
-          mediaKind: 'video',
+      try {
+        await renderExportTimeline({
+          video,
+          ctx,
+          canvasTrack: canvasTrack ?? null,
+          project,
           sourceWidth,
           sourceHeight,
+          size,
+          sourceDurationMs,
+          outputDurationMs,
+          mapOutputToSource,
+          fps,
+          isCancelled: () => cancelled,
+          onProgress,
         })
-
-        onProgress?.({
-          progress: 0.02 + (0.92 * (i + 1)) / frameCount,
-          phase: 'rendering',
-        })
-
-        // Yield so UI can update
-        if (i % 3 === 0) {
-          await new Promise((r) => setTimeout(r, 0))
+      } catch (err) {
+        if (recorder.state !== 'inactive') recorder.stop()
+        for (const track of canvasStream.getTracks()) track.stop()
+        if (err instanceof CaptureError && err.code === 'EXPORT_CANCELLED') {
+          onProgress?.({ progress: 0, phase: 'cancelled' })
         }
+        throw err
       }
 
       onProgress?.({ progress: 0.96, phase: 'finalizing' })
@@ -270,6 +404,11 @@ export function exportVideo(
         durationMs: outputDurationMs,
       }
     } finally {
+      try {
+        video.pause()
+      } catch {
+        // ignore
+      }
       if (recorder && recorder.state !== 'inactive') {
         try {
           recorder.stop()

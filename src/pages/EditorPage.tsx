@@ -605,9 +605,9 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Export bakes overlays into the file via MediaRecorder. Capture prefers AV1 → VP9 →
-            H.264/MP4 → VP8 (video-only, no audio). MP4 uses the browser’s native encoder when
-            available — no WASM download required.
+            Export plays the recording once while baking overlays (sharper than frame-seeking).
+            Capture prefers H.264 when available for smoother recording, with higher bitrates for
+            crisp UI text.
           </p>
         </TabsContent>
       </Tabs>

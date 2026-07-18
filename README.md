@@ -29,7 +29,7 @@ Designed primarily for **Chrome** and **Edge** on desktop.
 Requires:
 
 - `navigator.mediaDevices.getDisplayMedia`
-- `MediaRecorder` with a video codec (capture prefers AV1 → VP9 → H.264/MP4 → VP8; video-only, no audio)
+- `MediaRecorder` with a video codec (capture prefers H.264/MP4 for smoother recording, then VP9/AV1/VP8; video-only, no audio)
 - `HTMLCanvasElement.captureStream` for polished video export
 
 Firefox/Safari may lack codecs or capture behavior needed for the full loop. Safari typically records/exports **MP4 (H.264)**; Chrome/Edge often offer **WebM (VP9/AV1)** and may also support **MP4**. The app feature-detects APIs and shows clear errors when unsupported.
@@ -165,8 +165,9 @@ Shared canvas rendering powers preview and export so overlays match as closely a
 - Enhanced clicks require the companion script and workable same-origin / messaging constraints
 - Freeze markers are experimental
 - Desktop Chrome/Edge recommended; Safari works when MP4 MediaRecorder is available
-- Video export re-encodes frame-by-frame and takes roughly the media duration
+- Video export re-encodes by playing the recording once (sharper than seek-per-frame); takes roughly the media duration
 - Audio is never captured (silent demos only)
+- Capture quality still depends on the browser/OS encoder — share a **tab** at full size when possible for the sharpest result
 
 ## Manual QA checklist
 

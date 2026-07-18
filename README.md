@@ -39,11 +39,12 @@ Firefox/Safari may lack codecs or capture behavior needed for the full loop. The
 ## Recording flow
 
 1. Click **Record a demo**
-2. Choose a browser tab, window, or screen
-3. Pick an aspect ratio (16:9, 4:3, 1:1, or original)
-4. Start after a 3-second countdown
-5. Pause / resume / stop as needed
-6. Review in the editor, add events, export WebM
+2. Choose **Standard** or **Enhanced** click capture (Enhanced offers a console snippet to paste)
+3. Pick aspect ratio, then **Share tab & auto-start**
+4. Choose a browser tab, window, or screen
+5. Chrome may focus the shared tab — recording **auto-starts after a 3-second countdown** (no need to return and press Start). A floating control window opens when Document Picture-in-Picture is available.
+6. Pause / resume / stop from demomaiw, the floating control, or the browser’s stop-sharing bar
+7. Review in the editor, add events, export WebM
 
 ## Screenshot flow
 

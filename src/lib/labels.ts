@@ -1,5 +1,5 @@
-const MAX_LABEL_LENGTH = 42
-const MAX_VISIBLE_TEXT_LENGTH = 56
+const MAX_LABEL_LENGTH = 36
+const MAX_VISIBLE_TEXT_LENGTH = 48
 
 const SENSITIVE_PATTERNS = [
   /password/i,
@@ -10,6 +10,22 @@ const SENSITIVE_PATTERNS = [
   /auth/i,
   /credential/i,
 ]
+
+const GENERIC_LABELS = new Set([
+  'element',
+  'control',
+  'click',
+  'div',
+  'span',
+  'button',
+  'link',
+  'image',
+  'icon',
+  'item',
+  'list item',
+  'navigation',
+  'disclosure',
+])
 
 /** Controls we may treat as click targets (never read typed values). */
 export const INTERACTIVE_SELECTOR = [
@@ -65,7 +81,6 @@ export function isSensitiveField(el: Element | null): boolean {
   if (el.getAttribute('contenteditable') === 'true') return true
   if (tag === 'input') {
     const type = (el.getAttribute('type') ?? 'text').toLowerCase()
-    // Allow clickable control inputs; block value-bearing text fields.
     if (
       type === 'button' ||
       type === 'submit' ||
@@ -77,13 +92,12 @@ export function isSensitiveField(el: Element | null): boolean {
       type === 'file' ||
       type === 'image'
     ) {
-      // still block password-ish naming
       const meta = `${el.getAttribute('name') ?? ''} ${el.getAttribute('id') ?? ''}`
       return SENSITIVE_PATTERNS.some((p) => p.test(meta))
     }
     return TEXT_INPUT_TYPES.has(type) || SENSITIVE_PATTERNS.some((p) => p.test(type))
   }
-  if (tag === 'select') return false // clickable; we never read .value
+  if (tag === 'select') return false
   const name = `${el.getAttribute('name') ?? ''} ${el.getAttribute('id') ?? ''} ${el.getAttribute('autocomplete') ?? ''}`
   return SENSITIVE_PATTERNS.some((p) => p.test(name))
 }
@@ -99,14 +113,23 @@ export function normalizeLabelText(text: string): string {
     .trim()
 }
 
-export function trimVisibleText(text: string, max = MAX_VISIBLE_TEXT_LENGTH): string {
-  const cleaned = normalizeLabelText(text.replace(/\s+/g, ' '))
+/** Keep step chips short — first clause / first few words. */
+export function shortenStepLabel(text: string, maxWords = 5): string {
+  const cleaned = normalizeLabelText(text)
   if (!cleaned) return ''
-  // Prefer a short first phrase when the blob looks like a card dump
-  const firstLine = cleaned.split(/[|\n•·]/)[0]?.trim() ?? cleaned
-  const candidate = firstLine.length <= max ? firstLine : cleaned
-  if (candidate.length <= max) return candidate
-  return `${candidate.slice(0, max - 1).trimEnd()}…`
+  const clause =
+    cleaned.split(/[.|!?\n•·]| - | — |: /)[0]?.trim() ||
+    cleaned
+  const words = clause.split(/\s+/).filter(Boolean)
+  if (words.length <= maxWords) return words.join(' ')
+  return words.slice(0, maxWords).join(' ')
+}
+
+export function trimVisibleText(text: string, max = MAX_VISIBLE_TEXT_LENGTH): string {
+  const shortened = shortenStepLabel(text.replace(/\s+/g, ' '), 8)
+  if (!shortened) return ''
+  if (shortened.length <= max) return shortened
+  return `${shortened.slice(0, max - 1).trimEnd()}…`
 }
 
 export function humanizeTagName(tagName: string): string {
@@ -117,28 +140,33 @@ export function humanizeTagName(tagName: string): string {
     summary: 'Disclosure',
     img: 'Image',
     svg: 'Icon',
-    div: 'Element',
-    span: 'Element',
+    div: '',
+    span: '',
     li: 'List item',
     nav: 'Navigation',
     label: 'Control',
     input: 'Control',
   }
-  if (map[tag]) return map[tag]
+  if (tag in map) return map[tag]!
   return tag.charAt(0).toUpperCase() + tag.slice(1)
 }
 
 export function truncateLabel(label: string, max = MAX_LABEL_LENGTH): string {
-  const cleaned = normalizeLabelText(label)
+  const cleaned = shortenStepLabel(normalizeLabelText(label), 6)
   if (!cleaned) return ''
   if (cleaned.length <= max) return cleaned
   return `${cleaned.slice(0, max - 1).trimEnd()}…`
+}
+
+export function isGenericLabel(label: string): boolean {
+  return GENERIC_LABELS.has(label.trim().toLowerCase())
 }
 
 export function isLowQualityLabel(label: string): boolean {
   const t = label.trim()
   if (!t) return true
   if (t.length < 2) return true
+  if (isGenericLabel(t)) return true
   // Reject giant glued blobs without spaces that look accidental
   if (t.length > 28 && !/\s/.test(t)) return true
   if (/^[{[<]/.test(t)) return true
@@ -157,29 +185,29 @@ export interface LabelSource {
  * 1. aria-label
  * 2. visible trimmed text
  * 3. title attribute
- * 4. humanized element tag name
+ * 4. humanized tag (only when meaningful — never "Element")
+ *
+ * Returns '' when nothing useful is available (ring-only is fine).
  */
 export function generateEventLabel(source: LabelSource): string {
-  const aria = truncateLabel(source.ariaLabel ?? '')
-  if (aria && !SENSITIVE_PATTERNS.some((p) => p.test(aria)) && !isLowQualityLabel(aria)) {
-    return aria
+  const candidates = [
+    truncateLabel(source.ariaLabel ?? ''),
+    truncateLabel(shortenStepLabel(source.visibleText ?? '', 5)),
+    truncateLabel(source.title ?? ''),
+    truncateLabel(humanizeTagName(source.tagName ?? '')),
+  ]
+
+  for (const candidate of candidates) {
+    if (
+      candidate &&
+      !SENSITIVE_PATTERNS.some((p) => p.test(candidate)) &&
+      !isLowQualityLabel(candidate)
+    ) {
+      return candidate
+    }
   }
 
-  const visible = truncateLabel(trimVisibleText(source.visibleText ?? ''))
-  if (
-    visible &&
-    !SENSITIVE_PATTERNS.some((p) => p.test(visible)) &&
-    !isLowQualityLabel(visible)
-  ) {
-    return visible
-  }
-
-  const title = truncateLabel(source.title ?? '')
-  if (title && !SENSITIVE_PATTERNS.some((p) => p.test(title)) && !isLowQualityLabel(title)) {
-    return title
-  }
-
-  return humanizeTagName(source.tagName ?? 'element')
+  return ''
 }
 
 /**
@@ -189,7 +217,6 @@ export function generateEventLabel(source: LabelSource): string {
 export function extractSafeVisibleText(el: Element): string {
   if (isSensitiveField(el)) return ''
   if (el.closest('textarea, [contenteditable="true"]')) return ''
-  // Prefer aria-label on the element itself for extraction callers
   const aria = el.getAttribute('aria-label')
   if (aria) return trimVisibleText(aria)
 
@@ -215,13 +242,11 @@ export function findInteractiveTarget(target: EventTarget | null): Element | nul
   const interactive = target.closest(INTERACTIVE_SELECTOR)
   if (interactive && !isSensitiveField(interactive)) return interactive
 
-  // Color swatches / custom controls often lack roles — climb for a labeled ancestor.
   const labeled = target.closest('[aria-label], [title], button, a, label')
   if (labeled instanceof Element && !isSensitiveField(labeled)) return labeled
 
   if (isSensitiveField(target)) return null
 
-  // Last resort: clickable-looking host (tabindex >= 0)
   const tabbable = target.closest('[tabindex]:not([tabindex="-1"])')
   if (tabbable instanceof Element && !isSensitiveField(tabbable)) return tabbable
 

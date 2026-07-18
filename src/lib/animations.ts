@@ -1,4 +1,5 @@
 import type { CardPosition, ClickEvent, DemoEvent, TextCardEvent } from '@/types'
+import { isGenericLabel } from '@/lib/labels'
 import { easeInOutCubic, easeOutCubic } from '@/lib/easing'
 import { clamp } from '@/lib/utils'
 
@@ -167,19 +168,22 @@ export function getActiveOverlays(
 
   const activeCards = cards.filter((event) => isTextCardActive(event, timeMs, mediaKind))
 
-  // Auto step labels from clicks
+  // Auto step labels from clicks (compact chips — skip empty/generic/"Element")
+  const labelVisible = (c: ClickEvent) =>
+    c.showLabel !== false &&
+    c.label.trim().length > 0 &&
+    !isGenericLabel(c.label)
+
   const autoLabels =
     mediaKind === 'screenshot'
-      ? clicks
-          .filter((c) => c.label.trim().length > 0)
-          .map((c) => ({
-            id: `${c.id}-label`,
-            text: c.label,
-            position: c.labelPosition,
-            opacity: 1,
-          }))
+      ? clicks.filter(labelVisible).map((c) => ({
+          id: `${c.id}-label`,
+          text: c.label,
+          position: c.labelPosition,
+          opacity: 1,
+        }))
       : clicks
-          .filter((c) => c.label.trim().length > 0)
+          .filter(labelVisible)
           .map((c) => {
             const start = c.startTimeMs + DEFAULT_CARD_DELAY_MS
             const end = start + DEFAULT_CARD_DURATION_MS

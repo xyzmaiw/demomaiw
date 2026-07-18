@@ -829,12 +829,28 @@ function EventInspector({
           </Badge>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="label">Label</Label>
+          <Label htmlFor="label">Step label</Label>
           <Input
             id="label"
             value={click.label}
             disabled={disabled}
-            onChange={(e) => onChange({ label: e.target.value })}
+            placeholder="Optional short label"
+            onChange={(e) => {
+              const label = e.target.value
+              onChange({
+                label,
+                showLabel: label.trim().length > 0 ? (click.showLabel || true) : false,
+              })
+            }}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="show-label">Show label chip</Label>
+          <Switch
+            id="show-label"
+            checked={Boolean(click.showLabel) && click.label.trim().length > 0}
+            disabled={disabled || !click.label.trim()}
+            onCheckedChange={(showLabel) => onChange({ showLabel })}
           />
         </div>
         {isVideo && (

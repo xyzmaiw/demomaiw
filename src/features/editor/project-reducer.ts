@@ -187,8 +187,9 @@ export function createManualClickEvent(
   x: number,
   y: number,
   startTimeMs: number,
-  label = 'Click',
+  label = '',
 ): ClickEvent {
+  const trimmed = label.trim()
   return {
     id: createId('click'),
     type: 'click',
@@ -199,7 +200,8 @@ export function createManualClickEvent(
     zoomEnabled: true,
     zoomStrength: DEFAULT_ZOOM_STRENGTH,
     zoomHoldDurationMs: DEFAULT_ZOOM_HOLD_MS,
-    label,
+    label: trimmed,
+    showLabel: trimmed.length > 0,
     labelPosition: preferLabelPositionAwayFromClick(x, y),
     source: 'manual',
   }

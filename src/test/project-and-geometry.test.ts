@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { calculateCenterCrop, parseAspectRatio, resolveExportSize } from '@/lib/aspect'
+import {
+  calculateCenterCrop,
+  calculateContentLayout,
+  parseAspectRatio,
+  resolveExportSize,
+  resolveFitOutputSize,
+  resolvePreviewAspect,
+} from '@/lib/aspect'
 import { selectSupportedMimeType } from '@/lib/capabilities'
 import { calculateZoomTransform } from '@/features/export/renderer'
 import {
@@ -45,6 +52,35 @@ describe('aspect and crop', () => {
   it('resolves export sizes', () => {
     const size = resolveExportSize({ width: 1920, height: 1080 }, '16:9', '1280x720')
     expect(size).toEqual({ width: 1280, height: 720 })
+  })
+
+  it('fit framing never crops a tall page into 16:9', () => {
+    const source = { width: 1080, height: 1920 }
+    const out = resolveFitOutputSize(source, '16:9')
+    const layout = calculateContentLayout(source, out, '16:9', 'fit')
+    expect(layout.sourceRect).toEqual({ x: 0, y: 0, width: 1080, height: 1920 })
+    expect(layout.destRect.height).toBeCloseTo(1920)
+    expect(layout.destRect.width).toBeCloseTo(1080)
+    expect(resolveExportSize(source, '16:9', 'original', 'fit')).toEqual(out)
+  })
+
+  it('fill framing crops tall pages to cover 16:9', () => {
+    const source = { width: 1080, height: 1920 }
+    const layout = calculateContentLayout(source, { width: 1920, height: 1080 }, '16:9', 'fill')
+    expect(layout.sourceRect.height).toBeLessThan(1920)
+    expect(layout.sourceRect.width / layout.sourceRect.height).toBeCloseTo(16 / 9)
+  })
+
+  it('original aspect preview matches source', () => {
+    const source = { width: 1440, height: 900 }
+    expect(resolvePreviewAspect(source, 'original', 'fit')).toBeCloseTo(1440 / 900)
+  })
+
+  it('projects default to fit framing and full-page aspect', () => {
+    const project = createProject(media())
+    expect(project.aspectRatio).toBe('original')
+    expect(project.frameMode).toBe('fit')
+    expect(project.exportSettings.roundedFrame).toBe(false)
   })
 })
 

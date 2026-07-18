@@ -2,13 +2,13 @@ import type { CardPosition, ClickEvent, DemoEvent, TextCardEvent } from '@/types
 import { easeInOutCubic, easeOutCubic } from '@/lib/easing'
 import { clamp } from '@/lib/utils'
 
-export const DEFAULT_RING_DURATION_MS = 550
+export const DEFAULT_RING_DURATION_MS = 1200
 export const DEFAULT_ZOOM_STRENGTH = 1.12
-export const DEFAULT_ZOOM_HOLD_MS = 280
-export const DEFAULT_ZOOM_IN_MS = 220
-export const DEFAULT_ZOOM_OUT_MS = 320
-export const DEFAULT_CARD_DURATION_MS = 1500
-export const DEFAULT_CARD_DELAY_MS = 80
+export const DEFAULT_ZOOM_HOLD_MS = 420
+export const DEFAULT_ZOOM_IN_MS = 260
+export const DEFAULT_ZOOM_OUT_MS = 380
+export const DEFAULT_CARD_DURATION_MS = 2200
+export const DEFAULT_CARD_DELAY_MS = 120
 
 export interface RingAnimationState {
   progress: number
@@ -40,17 +40,22 @@ export function getClickRingProgress(
   if (reducedMotion) {
     return {
       progress,
-      opacity: 0.55 * (1 - progress),
+      opacity: 0.7 * (1 - progress * 0.55),
       scale: 1,
       active: true,
     }
   }
 
-  const eased = easeOutCubic(progress)
+  // Hold solid longer, then ease out — rings should read clearly on screen.
+  const holdEnd = 0.42
+  const fadeProgress = progress <= holdEnd ? 0 : (progress - holdEnd) / (1 - holdEnd)
+  const easedFade = easeOutCubic(fadeProgress)
+  const grow = easeOutCubic(Math.min(1, progress / 0.55))
+
   return {
     progress,
-    opacity: 1 - eased,
-    scale: 0.55 + eased * 0.9,
+    opacity: 1 - easedFade * 0.95,
+    scale: 0.72 + grow * 0.55,
     active: true,
   }
 }

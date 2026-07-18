@@ -36,6 +36,8 @@ interface StageFrameProps {
   live?: boolean
   recording?: boolean
   label?: string
+  /** Stronger vignette for decorative stages; capture uses soft by default */
+  vignette?: 'soft' | 'strong' | 'none'
 }
 
 export function StageFrame({
@@ -44,6 +46,7 @@ export function StageFrame({
   live,
   recording,
   label,
+  vignette = 'soft',
 }: StageFrameProps) {
   return (
     <div className={cn('stage-frame editor-checker', className)}>
@@ -64,7 +67,14 @@ export function StageFrame({
         </div>
       )}
       {children}
-      <div className="cinema-vignette pointer-events-none absolute inset-0 z-[5]" />
+      {vignette !== 'none' && (
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-0 z-[5]',
+            vignette === 'strong' ? 'cinema-vignette-strong' : 'cinema-vignette',
+          )}
+        />
+      )}
     </div>
   )
 }

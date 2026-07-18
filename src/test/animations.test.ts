@@ -34,7 +34,7 @@ describe('animations and overlays', () => {
     expect(mid.active).toBe(true)
     expect(mid.opacity).toBeGreaterThan(0)
     expect(mid.scale).toBeGreaterThan(0.5)
-    expect(getClickRingProgress(event, 2000).active).toBe(false)
+    expect(getClickRingProgress(event, 1000 + DEFAULT_RING_DURATION_MS + 1).active).toBe(false)
   })
 
   it('supports reduced-motion ring rendering', () => {

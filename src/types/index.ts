@@ -1,5 +1,7 @@
 export type ProjectAspectRatio = 'original' | '16:9' | '4:3' | '1:1'
 
+export type FrameMode = 'fit' | 'fill'
+
 export type CardPosition =
   | 'top-left'
   | 'top-center'
@@ -106,6 +108,8 @@ export interface CaptureProject {
   media: ProjectMedia
   events: DemoEvent[]
   aspectRatio: ProjectAspectRatio
+  /** fit = letterbox full page (default). fill = crop to cover. */
+  frameMode: FrameMode
   crop: CropState
   exportSettings: ExportSettings
   createdAt: number
@@ -194,6 +198,7 @@ export interface RenderFrameContext {
   outputWidth: number
   outputHeight: number
   aspectRatio: ProjectAspectRatio
+  frameMode: FrameMode
   crop: CropState
   events: DemoEvent[]
   reducedMotion: boolean

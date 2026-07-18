@@ -387,30 +387,57 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              Original keeps the full captured page. Other ratios letterbox by default so nothing is
+              cropped.
+            </p>
           </div>
 
           <div className="space-y-2">
-            <Label>Crop focal X ({project.crop.focalX.toFixed(2)})</Label>
-            <Slider
-              value={[project.crop.focalX]}
-              min={0}
-              max={1}
-              step={0.01}
-              disabled={isExporting}
-              onValueChange={([focalX]) => dispatch({ type: 'SET_CROP', crop: { focalX } })}
-            />
+            <Label>Framing</Label>
+            <Select
+              value={project.frameMode}
+              onValueChange={(v) =>
+                dispatch({ type: 'SET_FRAME_MODE', frameMode: v as 'fit' | 'fill' })
+              }
+              disabled={isExporting || project.aspectRatio === 'original'}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fit">Fit — full page, letterbox</SelectItem>
+                <SelectItem value="fill">Fill — crop to cover</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Crop focal Y ({project.crop.focalY.toFixed(2)})</Label>
-            <Slider
-              value={[project.crop.focalY]}
-              min={0}
-              max={1}
-              step={0.01}
-              disabled={isExporting}
-              onValueChange={([focalY]) => dispatch({ type: 'SET_CROP', crop: { focalY } })}
-            />
-          </div>
+
+          {project.frameMode === 'fill' && project.aspectRatio !== 'original' && (
+            <>
+              <div className="space-y-2">
+                <Label>Crop focal X ({project.crop.focalX.toFixed(2)})</Label>
+                <Slider
+                  value={[project.crop.focalX]}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  disabled={isExporting}
+                  onValueChange={([focalX]) => dispatch({ type: 'SET_CROP', crop: { focalX } })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Crop focal Y ({project.crop.focalY.toFixed(2)})</Label>
+                <Slider
+                  value={[project.crop.focalY]}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  disabled={isExporting}
+                  onValueChange={([focalY]) => dispatch({ type: 'SET_CROP', crop: { focalY } })}
+                />
+              </div>
+            </>
+          )}
 
           <div className="flex items-center justify-between gap-3">
             <Label htmlFor="rounded">Rounded frame</Label>

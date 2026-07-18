@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="demomaiw editor placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#141018"/>
+      <stop offset="100%" stop-color="#0a0a0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg)"/>
+  <rect x="24" y="24" width="600" height="360" rx="10" fill="#111114" stroke="#2a2a30"/>
+  <circle cx="320" cy="200" r="28" fill="none" stroke="#a78bfa" stroke-width="3"/>
+  <circle cx="320" cy="200" r="4" fill="#c4b5fd"/>
+  <rect x="420" y="300" width="160" height="36" rx="8" fill="#0c0c0e" stroke="#8b5cf6" stroke-opacity="0.5"/>
+  <text x="440" y="323" fill="#f4f4f5" font-family="IBM Plex Sans, sans-serif" font-size="14">Click Save</text>
+  <rect x="648" y="24" width="288" height="492" rx="10" fill="#121216" stroke="#2a2a30"/>
+  <text x="48" y="430" fill="#e4e4e7" font-family="Space Grotesk, sans-serif" font-size="28" font-weight="600">demomaiw</text>
+  <text x="48" y="462" fill="#a1a1aa" font-family="IBM Plex Sans, sans-serif" font-size="14">Record · annotate · export  on device</text>
+</svg>

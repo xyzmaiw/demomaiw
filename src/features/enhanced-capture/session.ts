@@ -3,6 +3,10 @@ import {
   CAPTURE_PROTOCOL_VERSION,
   validateCaptureMessage,
 } from '@/lib/capture-validation'
+import {
+  buildCaptureLoaderSnippet,
+  buildConsolePasteSnippet,
+} from '@/features/enhanced-capture/console-snippet'
 import type {
   CaptureClientClickPayload,
   CaptureClientMessage,
@@ -65,6 +69,7 @@ export class EnhancedCaptureSession {
   private clickHandlers = new Set<(payload: CaptureClientClickPayload) => void>()
   private statusHandlers = new Set<(connection: CaptureConnection) => void>()
   private recordingStartedAt: number | null = null
+  private handshakeTimer: number | null = null
 
   constructor(sessionId = createId('session')) {
     this.sessionId = sessionId
@@ -90,6 +95,11 @@ export class EnhancedCaptureSession {
 
     this.setStatus('waiting')
     this.broadcastHandshake()
+    this.handshakeTimer = window.setInterval(() => {
+      if (this.connection.status === 'waiting' || this.connection.status === 'disconnected') {
+        this.broadcastHandshake()
+      }
+    }, 1500)
   }
 
   markRecordingStart(now = performance.now()): void {
@@ -131,6 +141,10 @@ export class EnhancedCaptureSession {
   }
 
   close(): void {
+    if (this.handshakeTimer != null) {
+      window.clearInterval(this.handshakeTimer)
+      this.handshakeTimer = null
+    }
     for (const unsub of this.unsubscribers) unsub()
     this.unsubscribers = []
     for (const transport of this.transports) transport.close()
@@ -204,7 +218,12 @@ export function buildCaptureScriptSnippet(options: {
   baseUrl: string
   sessionId: string
   recorderOrigin: string
-}): { scriptTag: string; esmHint: string } {
+}): {
+  scriptTag: string
+  esmHint: string
+  consolePaste: string
+  consoleLoader: string
+} {
   const { baseUrl, sessionId, recorderOrigin } = options
   const scriptSrc = `${baseUrl.replace(/\/$/, '')}/capture-client.js`
   const scriptTag = `<script>
@@ -226,5 +245,10 @@ window.DEMOMAIW_CAPTURE = {
 };
 // then: <script src="${scriptSrc}"></script>`
 
-  return { scriptTag, esmHint }
+  return {
+    scriptTag,
+    esmHint,
+    consolePaste: buildConsolePasteSnippet({ sessionId, recorderOrigin }),
+    consoleLoader: buildCaptureLoaderSnippet({ baseUrl, sessionId, recorderOrigin }),
+  }
 }

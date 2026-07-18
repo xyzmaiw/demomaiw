@@ -31,6 +31,7 @@
   var lastClickKey = ''
   var lastClickAt = 0
   var startedAt = 0
+  var handshakeTimer = null
 
   function clampString(value, max) {
     if (typeof value !== 'string') return ''
@@ -172,6 +173,10 @@
     if (data.type === 'DEMOMAIW_HANDSHAKE' && data.role === 'recorder') {
       connected = true
       startedAt = Date.now()
+      if (handshakeTimer) {
+        clearInterval(handshakeTimer)
+        handshakeTimer = null
+      }
       sendReady()
       return
     }
@@ -201,6 +206,10 @@
     global.addEventListener('click', onClick, true)
     enabled = true
     sendHandshake()
+    if (handshakeTimer) clearInterval(handshakeTimer)
+    handshakeTimer = setInterval(function () {
+      if (!connected) sendHandshake()
+    }, 1500)
   }
 
   function disconnect() {
@@ -214,6 +223,10 @@
     }
     global.removeEventListener('click', onClick, true)
     global.removeEventListener('message', onMessage)
+    if (handshakeTimer) {
+      clearInterval(handshakeTimer)
+      handshakeTimer = null
+    }
     if (channel) {
       try {
         channel.close()

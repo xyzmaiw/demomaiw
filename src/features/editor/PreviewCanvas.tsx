@@ -129,18 +129,21 @@ export function PreviewCanvas({
   return (
     <div
       ref={containerRef}
-      className={cn(
-        'relative flex h-full min-h-[280px] w-full items-center justify-center editor-checker rounded-lg border border-border',
-        className,
-      )}
-    >
-      <canvas
-        ref={canvasRef}
-        className={cn('max-h-full max-w-full', interactive && 'cursor-crosshair')}
-        onClick={handleClick}
-        role="img"
-        aria-label="Demo preview canvas. Click to add a click marker when paused."
-      />
-    </div>
+        className={cn(
+          'relative flex h-full min-h-[280px] w-full items-center justify-center editor-checker rounded-lg border border-border',
+          className,
+        )}
+      >
+        <canvas
+          ref={canvasRef}
+          className={cn(
+            'max-h-full max-w-full drop-shadow-[0_12px_40px_rgba(0,0,0,0.45)]',
+            interactive && 'cursor-crosshair',
+          )}
+          onClick={handleClick}
+          role="img"
+          aria-label="Demo preview canvas. Click to add a click marker when paused."
+        />
+      </div>
   )
 }

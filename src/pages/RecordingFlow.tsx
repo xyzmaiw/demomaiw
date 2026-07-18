@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Atmosphere, StageFrame } from '@/components/Atmosphere'
 import {
   getVideoTrackSettings,
   onTrackEnded,
@@ -282,120 +283,151 @@ export function RecordingFlow({
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-semibold">Record a demo</h1>
-          <p className="text-sm text-muted-foreground">
-            Choose a tab, window, or screen. No microphone or system audio is captured.
-          </p>
+    <div className="relative flex min-h-screen flex-col">
+      <Atmosphere intensity="capture" />
+
+      <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-5 sm:px-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 animate-fade-in">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-primary/80">
+              Capture
+            </p>
+            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              Record a demo
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Choose a tab, window, or screen. No microphone or system audio.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {connection.status === 'connected' ? (
+              <Badge variant="success" className="gap-1">
+                <Wifi className="size-3" />
+                Enhanced connected
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="gap-1 border-white/10 bg-white/[0.03]">
+                <WifiOff className="size-3" />
+                Standard mode
+              </Badge>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {connection.status === 'connected' ? (
-            <Badge variant="success" className="gap-1">
-              <Wifi className="size-3" />
-              Enhanced connected
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="gap-1">
-              <WifiOff className="size-3" />
-              Standard mode
-            </Badge>
+
+        <StageFrame
+          className="relative min-h-[52vh] flex-1 animate-scale-in"
+          live={phase === 'preview' || phase === 'countdown'}
+          recording={phase === 'recording'}
+          label={phase === 'paused' ? 'PAUSED' : phase === 'picking' ? 'Waiting…' : undefined}
+        >
+          <video
+            ref={videoRef}
+            className="absolute inset-0 h-full w-full object-contain"
+            muted
+            playsInline
+            autoPlay
+          />
+          {phase === 'countdown' && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/55 backdrop-blur-[2px]">
+              <span
+                key={countdown}
+                className="font-display text-[7.5rem] font-semibold leading-none text-white animate-countdown-pop sm:text-[9rem]"
+              >
+                {countdown || 'Go'}
+              </span>
+            </div>
           )}
-        </div>
-      </div>
+          {phase === 'picking' && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center">
+              <p className="text-sm text-white/50">Waiting for capture source…</p>
+            </div>
+          )}
+        </StageFrame>
 
-      <div className="relative overflow-hidden rounded-lg border border-border bg-black editor-checker">
-        <video
-          ref={videoRef}
-          className="mx-auto max-h-[60vh] w-full object-contain"
-          muted
-          playsInline
-          autoPlay
-        />
-        {phase === 'countdown' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <span className="font-display text-7xl font-semibold text-white">{countdown || 'Go'}</span>
-          </div>
-        )}
-      </div>
-
-      {error && (
-        <p role="alert" className="mt-3 text-sm text-destructive">
-          {error}
-        </p>
-      )}
-
-      <div className="mt-4 flex flex-wrap items-end gap-4">
-        {(phase === 'preview' || phase === 'countdown') && (
-          <div className="space-y-2">
-            <Label htmlFor="aspect">Aspect ratio</Label>
-            <Select
-              value={aspectRatio}
-              onValueChange={(v) => setAspectRatio(v as ProjectAspectRatio)}
-              disabled={phase === 'countdown'}
-            >
-              <SelectTrigger id="aspect" className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(['original', '16:9', '4:3', '1:1'] as const).map((ratio) => (
-                  <SelectItem key={ratio} value={ratio}>
-                    {getAspectLabel(ratio)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-destructive">
+            {error}
+          </p>
         )}
 
-        {(phase === 'recording' || phase === 'paused') && (
-          <div className="font-mono text-lg tabular-nums" aria-live="polite">
-            {formatDuration(elapsedMs)}
-            {phase === 'paused' ? ' (paused)' : ''}
-          </div>
-        )}
+        <div className="mt-4 flex flex-wrap items-end gap-4 rounded-xl border border-white/[0.06] bg-panel/60 p-3 backdrop-blur-sm animate-fade-up">
+          {(phase === 'preview' || phase === 'countdown') && (
+            <div className="space-y-2">
+              <Label htmlFor="aspect">Aspect ratio</Label>
+              <Select
+                value={aspectRatio}
+                onValueChange={(v) => setAspectRatio(v as ProjectAspectRatio)}
+                disabled={phase === 'countdown'}
+              >
+                <SelectTrigger id="aspect" className="w-40 border-white/10 bg-black/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(['original', '16:9', '4:3', '1:1'] as const).map((ratio) => (
+                    <SelectItem key={ratio} value={ratio}>
+                      {getAspectLabel(ratio)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-        <div className="ml-auto flex flex-wrap gap-2">
-          {phase === 'preview' && (
-            <>
-              <Button variant="outline" onClick={handleCancel}>
+          {(phase === 'recording' || phase === 'paused') && (
+            <div className="flex items-center gap-3">
+              {phase === 'recording' && <span className="rec-dot" />}
+              <div className="font-mono text-xl tabular-nums tracking-tight" aria-live="polite">
+                {formatDuration(elapsedMs)}
+                {phase === 'paused' ? (
+                  <span className="ml-2 text-sm text-muted-foreground">paused</span>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          <div className="ml-auto flex flex-wrap gap-2">
+            {phase === 'preview' && (
+              <>
+                <Button variant="outline" className="border-white/10" onClick={handleCancel}>
+                  Cancel
+                </Button>
+                <Button size="lg" onClick={beginCountdown}>
+                  Start recording
+                </Button>
+              </>
+            )}
+            {phase === 'countdown' && (
+              <Button variant="outline" className="border-white/10" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button onClick={beginCountdown}>Start recording</Button>
-            </>
-          )}
-          {phase === 'countdown' && (
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-          )}
-          {phase === 'recording' && (
-            <>
-              <Button variant="secondary" onClick={pauseRecording}>
-                <Pause className="size-4" />
-                Pause
-              </Button>
-              <Button variant="destructive" onClick={() => void stopRecording()}>
-                <Square className="size-4" />
-                Stop
-              </Button>
-            </>
-          )}
-          {phase === 'paused' && (
-            <>
-              <Button variant="secondary" onClick={resumeRecording}>
-                <Play className="size-4" />
-                Resume
-              </Button>
-              <Button variant="destructive" onClick={() => void stopRecording()}>
-                <Square className="size-4" />
-                Stop
-              </Button>
-            </>
-          )}
-          {phase === 'finalizing' && <Button disabled>Saving recording…</Button>}
-          {phase === 'picking' && <Button disabled>Waiting for capture source…</Button>}
+            )}
+            {phase === 'recording' && (
+              <>
+                <Button variant="secondary" onClick={pauseRecording}>
+                  <Pause className="size-4" />
+                  Pause
+                </Button>
+                <Button variant="destructive" onClick={() => void stopRecording()}>
+                  <Square className="size-4" />
+                  Stop
+                </Button>
+              </>
+            )}
+            {phase === 'paused' && (
+              <>
+                <Button variant="secondary" onClick={resumeRecording}>
+                  <Play className="size-4" />
+                  Resume
+                </Button>
+                <Button variant="destructive" onClick={() => void stopRecording()}>
+                  <Square className="size-4" />
+                  Stop
+                </Button>
+              </>
+            )}
+            {phase === 'finalizing' && <Button disabled>Saving recording…</Button>}
+            {phase === 'picking' && <Button disabled>Waiting for capture source…</Button>}
+          </div>
         </div>
       </div>
     </div>

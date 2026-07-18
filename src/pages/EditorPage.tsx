@@ -43,6 +43,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
+import { Atmosphere } from '@/components/Atmosphere'
 import { PreviewCanvas } from '@/features/editor/PreviewCanvas'
 import { TimelineBar } from '@/features/editor/TimelineBar'
 import {
@@ -532,35 +533,39 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
   )
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex items-center gap-3 border-b border-border bg-panel/80 px-4 py-3 backdrop-blur">
+    <div className="relative flex h-screen flex-col overflow-hidden">
+      <Atmosphere intensity="studio" />
+
+      <header className="relative z-10 flex items-center gap-3 border-b border-white/[0.06] bg-panel/50 px-4 py-2.5 backdrop-blur-md animate-fade-in">
         <Button variant="ghost" size="sm" onClick={() => setConfirmExit(true)} disabled={isExporting}>
           <ArrowLeft className="size-4" />
           Home
         </Button>
-        <Separator orientation="vertical" className="h-5" />
+        <Separator orientation="vertical" className="h-5 bg-white/10" />
         <div className="min-w-0 flex-1">
           <Input
             value={project.name}
             disabled={isExporting}
             onChange={(e) => dispatch({ type: 'SET_NAME', name: e.target.value })}
-            className="h-8 border-transparent bg-transparent px-1 font-display text-base font-semibold focus-visible:border-border"
+            className="h-8 border-transparent bg-transparent px-1 font-display text-base font-semibold tracking-tight focus-visible:border-border"
             aria-label="Project name"
           />
         </div>
-        <Badge variant="outline">{isVideo ? 'Video' : 'Screenshot'}</Badge>
+        <Badge variant="outline" className="border-white/10 bg-white/[0.03]">
+          {isVideo ? 'Video' : 'Screenshot'}
+        </Badge>
         <Badge variant="secondary" className="hidden sm:inline-flex">
           {project.media.width}×{project.media.height}
         </Badge>
       </header>
 
-      <p className="border-b border-border bg-panel-muted px-4 py-2 text-xs text-muted-foreground lg:hidden">
+      <p className="relative z-10 border-b border-white/[0.06] bg-panel-muted/80 px-4 py-2 text-xs text-muted-foreground lg:hidden">
         Recording and editing work best on desktop.
       </p>
 
-      <div className="hidden min-h-0 flex-1 lg:block">
+      <div className="relative z-10 hidden min-h-0 flex-1 lg:block">
         <ResizablePanelGroup direction="horizontal">
-          <ResizablePanel defaultSize={68} minSize={45}>
+          <ResizablePanel defaultSize={70} minSize={48}>
             <EditorStage
               project={project}
               currentTimeMs={currentTimeMs}
@@ -579,14 +584,16 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
               onCanvasClick={addClickAt}
             />
           </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={32} minSize={24}>
-            <div className="h-full overflow-auto bg-panel p-4">{inspector}</div>
+          <ResizableHandle withHandle className="bg-white/[0.04]" />
+          <ResizablePanel defaultSize={30} minSize={22}>
+            <div className="h-full overflow-auto border-l border-white/[0.06] bg-panel/70 p-4 backdrop-blur-sm">
+              {inspector}
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col lg:hidden">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col lg:hidden">
         <div className="min-h-0 flex-1">
           <EditorStage
             project={project}
@@ -606,7 +613,7 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
             onCanvasClick={addClickAt}
           />
         </div>
-        <div className="max-h-[42vh] overflow-auto border-t border-border bg-panel p-4">
+        <div className="max-h-[42vh] overflow-auto border-t border-white/[0.06] bg-panel/80 p-4 backdrop-blur-sm">
           {inspector}
         </div>
       </div>
@@ -662,7 +669,7 @@ function EditorStage(props: {
   onCanvasClick: (x: number, y: number) => void
 }) {
   return (
-    <div className="flex h-full flex-col gap-3 p-4">
+    <div className="flex h-full flex-col gap-3 p-3 sm:p-4">
       <PreviewCanvas
         project={props.project}
         timeMs={props.currentTimeMs}
@@ -671,10 +678,10 @@ function EditorStage(props: {
         imageRef={props.imageRef}
         onCanvasClick={props.onCanvasClick}
         interactive={!props.isExporting}
-        className="min-h-0 flex-1"
+        className="min-h-0 flex-1 stage-frame !rounded-xl border-white/[0.06]"
       />
       {props.isVideo && (
-        <div className="space-y-3 rounded-lg border border-border bg-panel p-3">
+        <div className="space-y-3 rounded-xl border border-white/[0.06] bg-panel/55 p-3 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             {props.isPlaying ? (
               <Button size="sm" variant="secondary" onClick={props.onPause} disabled={props.isExporting}>
@@ -690,12 +697,16 @@ function EditorStage(props: {
             <Button
               size="sm"
               variant="outline"
+              className="border-white/10"
               disabled={props.isExporting}
               onClick={() => props.onCanvasClick(0.5, 0.5)}
             >
               <Plus className="size-4" />
               Add click at center
             </Button>
+            <p className="ml-auto hidden text-xs text-muted-foreground sm:block">
+              Pause and click the stage to place a marker
+            </p>
           </div>
           <TimelineBar
             durationMs={props.durationMs}

@@ -5,43 +5,43 @@
 @layer base {
   :root {
     /* maiw dark creative-tool theme */
-    --background: 240 6% 4%;
+    --background: 240 8% 3%;
     --foreground: 240 5% 96%;
 
-    --panel: 240 5% 7%;
-    --panel-muted: 240 4% 11%;
+    --panel: 240 6% 6%;
+    --panel-muted: 240 5% 9%;
 
-    --card: 240 5% 7%;
+    --card: 240 6% 6%;
     --card-foreground: 240 5% 96%;
 
-    --popover: 240 5% 8%;
+    --popover: 240 6% 7%;
     --popover-foreground: 240 5% 96%;
 
-    --primary: 263 70% 58%;
+    --primary: 263 68% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 4% 14%;
+    --secondary: 240 5% 12%;
     --secondary-foreground: 240 5% 90%;
 
-    --muted: 240 4% 14%;
-    --muted-foreground: 240 4% 64%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 240 4% 62%;
 
-    --accent: 263 40% 18%;
-    --accent-foreground: 263 80% 85%;
+    --accent: 263 36% 16%;
+    --accent-foreground: 263 80% 86%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 263 70% 58%;
+    --border: 240 5% 14%;
+    --input: 240 5% 14%;
+    --ring: 263 68% 56%;
 
-    --overlay: 240 6% 2%;
-    --click-ring: 263 70% 58%;
-    --editor-grid: 240 4% 12%;
-    --timeline-marker: 263 80% 72%;
+    --overlay: 240 8% 2%;
+    --click-ring: 263 68% 56%;
+    --editor-grid: 240 5% 8%;
+    --timeline-marker: 263 78% 72%;
 
-    --radius: 0.4rem;
+    --radius: 0.45rem;
   }
 
   * {
@@ -56,9 +56,12 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    background-color: hsl(var(--background));
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(263 50% 20% / 0.35), transparent),
-      linear-gradient(180deg, hsl(240 6% 5%), hsl(240 6% 3%));
+      radial-gradient(ellipse 90% 55% at 50% -18%, hsl(263 55% 22% / 0.42), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 100% 20%, hsl(230 40% 18% / 0.18), transparent 50%),
+      radial-gradient(ellipse 40% 35% at 0% 80%, hsl(263 30% 12% / 0.25), transparent 45%),
+      linear-gradient(180deg, hsl(240 8% 4%), hsl(240 8% 2.5%));
     background-attachment: fixed;
   }
 
@@ -78,15 +81,82 @@
   }
 }
 
+@layer components {
+  .atmosphere {
+    @apply pointer-events-none fixed inset-0 -z-10 overflow-hidden;
+  }
+
+  .atmosphere-orb {
+    @apply absolute rounded-full blur-3xl;
+    will-change: transform, opacity;
+  }
+
+  .stage-frame {
+    @apply relative overflow-hidden rounded-xl border border-white/[0.06] bg-black shadow-[0_0_0_1px_rgba(0,0,0,0.4),0_24px_80px_-24px_rgba(0,0,0,0.85)];
+  }
+
+  .stage-frame::before {
+    content: '';
+    @apply pointer-events-none absolute inset-0 z-10 rounded-[inherit];
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .cinema-vignette {
+    background:
+      radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+  }
+
+  .rec-dot {
+    @apply inline-block size-2 rounded-full bg-red-500;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+    animation: rec-pulse 1.4s ease-out infinite;
+  }
+
+  .action-tile {
+    @apply relative flex min-h-[7.5rem] flex-col items-start justify-between overflow-hidden rounded-xl border border-white/[0.08] bg-panel/70 p-5 text-left transition duration-300;
+    @apply hover:border-primary/40 hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+
+  .action-tile::after {
+    content: '';
+    @apply pointer-events-none absolute -right-8 -top-8 size-28 rounded-full bg-primary/10 opacity-0 blur-2xl transition duration-500;
+  }
+
+  .action-tile:hover::after,
+  .action-tile:focus-visible::after {
+    @apply opacity-100;
+  }
+}
+
 @layer utilities {
   .editor-checker {
     background-color: hsl(var(--editor-grid));
     background-image:
-      linear-gradient(45deg, hsl(240 4% 9%) 25%, transparent 25%),
-      linear-gradient(-45deg, hsl(240 4% 9%) 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, hsl(240 4% 9%) 75%),
-      linear-gradient(-45deg, transparent 75%, hsl(240 4% 9%) 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      linear-gradient(45deg, hsl(240 5% 6%) 25%, transparent 25%),
+      linear-gradient(-45deg, hsl(240 5% 6%) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, hsl(240 5% 6%) 75%),
+      linear-gradient(-45deg, transparent 75%, hsl(240 5% 6%) 75%);
+    background-size: 18px 18px;
+    background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .mask-fade-b {
+    mask-image: linear-gradient(to bottom, black 70%, transparent);
+  }
+}
+
+@keyframes rec-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }

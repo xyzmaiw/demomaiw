@@ -12,6 +12,7 @@ import { createId } from '@/lib/utils'
 export function clickEventFromEnhanced(
   payload: CaptureClientClickPayload,
   startTimeMs: number,
+  options?: { showLabel?: boolean },
 ): ClickEvent {
   const label = generateEventLabel({
     ariaLabel: payload.ariaLabel,
@@ -19,6 +20,7 @@ export function clickEventFromEnhanced(
     title: payload.title,
     tagName: payload.tagName,
   })
+  const showLabel = options?.showLabel !== false && label.length > 0
 
   return {
     id: createId('click'),
@@ -31,6 +33,7 @@ export function clickEventFromEnhanced(
     zoomStrength: DEFAULT_ZOOM_STRENGTH,
     zoomHoldDurationMs: DEFAULT_ZOOM_HOLD_MS,
     label,
+    showLabel,
     labelPosition: preferLabelPositionAwayFromClick(payload.x, payload.y),
     source: 'enhanced',
     sourceMetadata: {

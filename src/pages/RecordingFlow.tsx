@@ -37,16 +37,25 @@ import {
   revokeObjectUrl,
   type MediaRecorderController,
 } from '@/features/capture/recording'
-import { createProject } from '@/features/editor/project-reducer'
+import {
+  createProject,
+} from '@/features/editor/project-reducer'
 import { buildConsolePasteSnippet } from '@/features/enhanced-capture/console-snippet'
+import {
+  DEFAULT_RING_DURATION_MS,
+  DEFAULT_ZOOM_HOLD_MS,
+  DEFAULT_ZOOM_STRENGTH,
+  preferLabelPositionAwayFromClick,
+} from '@/lib/animations'
 import { getAspectLabel } from '@/lib/aspect'
 import {
   COUNTDOWN_SECONDS,
   resetTabIndicator,
   setTabIndicator,
 } from '@/lib/tab-indicator'
-import { formatDuration, withBase } from '@/lib/utils'
+import { createId, formatDuration, withBase } from '@/lib/utils'
 import type {
+  AnnotationStyle,
   CaptureConnection,
   CaptureProject,
   ClickSourceMetadata,
@@ -93,7 +102,9 @@ export function RecordingFlow({
 }: RecordingFlowProps) {
   const [phase, setPhase] = useState<Phase>('setup')
   const [captureMode, setCaptureMode] = useState<CaptureMode | null>(null)
+  const [annotationStyle, setAnnotationStyle] = useState<AnnotationStyle>('rings')
   const [aspectRatio, setAspectRatio] = useState<ProjectAspectRatio>('original')
+  const annotationStyleRef = useRef<AnnotationStyle>('rings')
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS)
   const [elapsedMs, setElapsedMs] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -119,6 +130,10 @@ export function RecordingFlow({
   useEffect(() => {
     aspectRef.current = aspectRatio
   }, [aspectRatio])
+
+  useEffect(() => {
+    annotationStyleRef.current = annotationStyle
+  }, [annotationStyle])
 
   useEffect(() => {
     phaseRef.current = phase
@@ -207,20 +222,23 @@ export function RecordingFlow({
 
         const project = createProject(media)
         project.aspectRatio = aspectRef.current
+        const showLabels = annotationStyleRef.current === 'rings-and-labels'
 
         for (const pending of pendingEnhancedClicksRef.current) {
+          const label = pending.label.trim()
           project.events.push({
-            id: crypto.randomUUID(),
+            id: createId('click'),
             type: 'click',
             x: pending.x,
             y: pending.y,
             startTimeMs: pending.timeMs,
-            ringDurationMs: 550,
+            ringDurationMs: DEFAULT_RING_DURATION_MS,
             zoomEnabled: true,
-            zoomStrength: 1.12,
-            zoomHoldDurationMs: 280,
-            label: pending.label,
-            labelPosition: pending.y < 0.45 ? 'bottom-center' : 'top-center',
+            zoomStrength: DEFAULT_ZOOM_STRENGTH,
+            zoomHoldDurationMs: DEFAULT_ZOOM_HOLD_MS,
+            label,
+            showLabel: showLabels && label.length > 0,
+            labelPosition: preferLabelPositionAwayFromClick(pending.x, pending.y),
             source: 'enhanced',
             sourceMetadata: pending.metadata,
           })
@@ -547,7 +565,7 @@ export function RecordingFlow({
                 <span>
                   <span className="block font-display text-lg font-semibold">Enhanced</span>
                   <span className="mt-1 block text-sm text-muted-foreground">
-                    Auto rings, zooms, step labels
+                    Auto rings & zooms (labels optional)
                   </span>
                 </span>
               </button>
@@ -600,6 +618,40 @@ export function RecordingFlow({
                   <Terminal className="size-3.5" />
                   Skip companion for now
                 </Button>
+              </div>
+
+              <div className="space-y-2 border-t border-white/[0.06] pt-3">
+                <p className="text-sm font-medium">Click annotations</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    className={`rounded-lg border px-3 py-2.5 text-left transition ${
+                      annotationStyle === 'rings'
+                        ? 'border-primary/50 bg-primary/10'
+                        : 'border-white/10 bg-black/20 hover:border-white/20'
+                    }`}
+                    onClick={() => setAnnotationStyle('rings')}
+                  >
+                    <span className="block text-sm font-medium">Circles only</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Click rings + zoom — no step chips
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-lg border px-3 py-2.5 text-left transition ${
+                      annotationStyle === 'rings-and-labels'
+                        ? 'border-primary/50 bg-primary/10'
+                        : 'border-white/10 bg-black/20 hover:border-white/20'
+                    }`}
+                    onClick={() => setAnnotationStyle('rings-and-labels')}
+                  >
+                    <span className="block text-sm font-medium">Circles + labels</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Compact chips when a good label is found
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

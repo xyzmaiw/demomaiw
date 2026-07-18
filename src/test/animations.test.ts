@@ -19,7 +19,8 @@ function click(partial: Partial<ClickEvent> & Pick<ClickEvent, 'id' | 'startTime
     zoomEnabled: true,
     zoomStrength: DEFAULT_ZOOM_STRENGTH,
     zoomHoldDurationMs: 280,
-    label: 'Click',
+    label: 'Open settings',
+    showLabel: true,
     labelPosition: 'bottom-center',
     source: 'manual',
     ...partial,
@@ -71,10 +72,18 @@ describe('animations and overlays', () => {
       durationMs: 1000,
       position: 'top-left',
     }
-    const events = [click({ id: 'c1', startTimeMs: 500, label: 'Save' }), card]
-    const overlays = getActiveOverlays(events, 600, 'video')
+    const events = [click({ id: 'c1', startTimeMs: 500, label: 'Save', showLabel: true }), card]
+    const overlays = getActiveOverlays(events, 700, 'video')
     expect(overlays.textCards).toHaveLength(1)
     expect(overlays.rings.some((r) => r.event.id === 'c1')).toBe(true)
+    expect(overlays.autoLabels.some((l) => l.text === 'Save')).toBe(true)
+  })
+
+  it('hides auto labels when showLabel is false', () => {
+    const events = [click({ id: 'c1', startTimeMs: 0, label: 'Save', showLabel: false })]
+    const overlays = getActiveOverlays(events, 200, 'video')
+    expect(overlays.autoLabels).toHaveLength(0)
+    expect(overlays.rings).toHaveLength(1)
   })
 
   it('calculates card positions inside safe bounds', () => {

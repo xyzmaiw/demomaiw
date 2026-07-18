@@ -40,8 +40,9 @@ function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
   maxWidth: number,
+  maxLines = 2,
 ): string[] {
-  const words = text.split(/\s+/)
+  const words = text.split(/\s+/).filter(Boolean)
   const lines: string[] = []
   let current = ''
   for (const word of words) {
@@ -51,12 +52,20 @@ function wrapText(
     } else {
       if (current) lines.push(current)
       current = word
+      if (lines.length >= maxLines) break
     }
   }
-  if (current) lines.push(current)
-  return lines.slice(0, 4)
+  if (current && lines.length < maxLines) lines.push(current)
+  if (words.length && lines.length === maxLines) {
+    const last = lines[maxLines - 1]!
+    if (!last.endsWith('…') && words.join(' ') !== lines.join(' ')) {
+      lines[maxLines - 1] = `${last.replace(/…$/, '').trimEnd()}…`
+    }
+  }
+  return lines
 }
 
+/** Compact step chip — never a full-screen slab. */
 function drawTextCard(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -67,17 +76,24 @@ function drawTextCard(
 ) {
   if (!text.trim() || opacity <= 0) return
 
-  const paddingX = 14
-  const paddingY = 10
-  const maxCardWidth = Math.min(360, canvasWidth * 0.46)
+  const fontSize = Math.max(12, Math.min(18, Math.round(Math.min(canvasWidth, canvasHeight) * 0.018)))
+  const paddingX = Math.round(fontSize * 0.85)
+  const paddingY = Math.round(fontSize * 0.55)
+  const maxCardWidth = Math.min(280, Math.round(canvasWidth * 0.42))
+
   ctx.save()
   ctx.globalAlpha = opacity
-  ctx.font = `500 ${Math.max(13, Math.round(canvasWidth * 0.014))}px "IBM Plex Sans", sans-serif`
+  ctx.font = `500 ${fontSize}px "IBM Plex Sans", system-ui, sans-serif`
 
-  const lines = wrapText(ctx, text, maxCardWidth - paddingX * 2)
-  const lineHeight = Math.round(parseInt(ctx.font, 10) * 1.35)
-  const textWidth = Math.max(...lines.map((l) => ctx.measureText(l).width), 40)
-  const cardWidth = Math.min(maxCardWidth, textWidth + paddingX * 2)
+  const lines = wrapText(ctx, text.trim(), maxCardWidth - paddingX * 2, 2)
+  if (lines.length === 0) {
+    ctx.restore()
+    return
+  }
+
+  const lineHeight = Math.round(fontSize * 1.3)
+  const textWidth = Math.max(...lines.map((l) => ctx.measureText(l).width), 24)
+  const cardWidth = Math.min(maxCardWidth, Math.ceil(textWidth + paddingX * 2))
   const cardHeight = lines.length * lineHeight + paddingY * 2
   const { x, y } = calculateCardPosition(
     position,
@@ -85,19 +101,19 @@ function drawTextCard(
     canvasHeight,
     cardWidth,
     cardHeight,
-    Math.max(16, canvasWidth * 0.02),
+    Math.max(14, Math.round(Math.min(canvasWidth, canvasHeight) * 0.025)),
   )
 
-  ctx.fillStyle = 'rgba(12, 12, 14, 0.88)'
-  ctx.strokeStyle = 'rgba(167, 139, 250, 0.35)'
+  ctx.fillStyle = 'rgba(10, 10, 12, 0.82)'
+  ctx.strokeStyle = 'rgba(167, 139, 250, 0.4)'
   ctx.lineWidth = 1
-  roundRectPath(ctx, x, y, cardWidth, cardHeight, 8)
+  roundRectPath(ctx, x, y, cardWidth, cardHeight, Math.min(10, cardHeight / 2))
   ctx.fill()
   ctx.stroke()
 
   ctx.fillStyle = '#f4f4f5'
   lines.forEach((line, i) => {
-    ctx.fillText(line, x + paddingX, y + paddingY + lineHeight * (i + 0.75))
+    ctx.fillText(line, x + paddingX, y + paddingY + lineHeight * (i + 0.72))
   })
   ctx.restore()
 }

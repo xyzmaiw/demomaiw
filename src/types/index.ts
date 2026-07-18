@@ -12,6 +12,9 @@ export type CardPosition =
 
 export type EventSource = 'manual' | 'enhanced'
 
+/** What Enhanced/auto clicks should draw during capture. */
+export type AnnotationStyle = 'rings' | 'rings-and-labels'
+
 export type MediaKind = 'video' | 'screenshot'
 
 export interface CropState {
@@ -69,6 +72,8 @@ export interface ClickEvent {
   zoomStrength: number
   zoomHoldDurationMs: number
   label: string
+  /** When false, ring/zoom still play but the step chip is hidden. */
+  showLabel: boolean
   labelPosition: CardPosition
   source: EventSource
   sourceMetadata?: ClickSourceMetadata

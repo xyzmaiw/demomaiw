@@ -4,7 +4,7 @@ Browser-only product demo recorder for indie developers.
 
 Record a tab, window, or screen. Add click highlights, zooms, and step cards. Export a polished silent WebM or MP4 — or annotate a screenshot and download a PNG. Everything stays on your device.
 
-![demomaiw editor placeholder](docs/screenshot-placeholder.svg)
+![demomaiw editor placeholder](docs/screenshot.png)
 
 ## Features
 

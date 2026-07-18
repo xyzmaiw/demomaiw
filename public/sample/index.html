@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Northwind Pulse — sample product</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #101218;
+        --panel: #171a22;
+        --border: #2a2f3a;
+        --text: #e8eaef;
+        --muted: #9aa3b2;
+        --accent: #6d8cff;
+        --accent-2: #3dd6c6;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", sans-serif;
+        background: radial-gradient(ellipse at top, #1a2030, var(--bg));
+        color: var(--text);
+        min-height: 100vh;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(16, 18, 24, 0.9);
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(8px);
+      }
+      .brand { font-family: "Space Grotesk", sans-serif; font-weight: 600; letter-spacing: -0.02em; }
+      nav { display: flex; gap: 8px; flex-wrap: wrap; }
+      button, .btn {
+        font: inherit;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+      button.primary { background: var(--accent); border-color: transparent; color: #0b1020; font-weight: 600; }
+      button:hover, .btn:hover { filter: brightness(1.08); }
+      main { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
+      .banner {
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 20px;
+      }
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+      @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+      }
+      .card h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); font-weight: 500; }
+      .card strong { font-size: 24px; font-family: "Space Grotesk", sans-serif; }
+      .row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; align-items: center; }
+      .tabs { display: flex; gap: 6px; margin-top: 20px; }
+      .tabs button[aria-selected="true"] { background: #243049; border-color: var(--accent); }
+      .panel { margin-top: 12px; }
+      .hidden { display: none; }
+      .chart {
+        height: 120px;
+        display: flex;
+        align-items: end;
+        gap: 8px;
+        padding-top: 12px;
+      }
+      .bar {
+        flex: 1;
+        background: linear-gradient(180deg, var(--accent-2), var(--accent));
+        border-radius: 4px 4px 0 0;
+        min-height: 12px;
+      }
+      dialog {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--panel);
+        color: var(--text);
+        padding: 20px;
+        max-width: 360px;
+      }
+      dialog::backdrop { background: rgba(0,0,0,0.55); }
+      select, input[type="checkbox"] { accent-color: var(--accent); }
+      label.toggle { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); }
+      #status { font-size: 12px; color: var(--muted); }
+      #status.connected { color: #7ddea8; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">Northwind Pulse</div>
+      <nav>
+        <button type="button" data-nav="overview" aria-label="Overview">Overview</button>
+        <button type="button" data-nav="reports" aria-label="Reports">Reports</button>
+        <button type="button" class="primary" id="invite-btn" aria-label="Invite teammate">Invite</button>
+      </nav>
+    </header>
+
+    <main>
+      <div class="banner">
+        Sample product for demomaiw Enhanced mode. Fake data only — no auth, no APIs.
+        <span id="status">Companion: idle</span>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Active trials</h3>
+          <strong>128</strong>
+        </div>
+        <div class="card">
+          <h3>Conversion</h3>
+          <strong>18%</strong>
+        </div>
+        <div class="card">
+          <h3>NPS</h3>
+          <strong>46</strong>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3>Weekly signups</h3>
+        <div class="chart" aria-hidden="true">
+          <div class="bar" style="height:40%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:35%"></div>
+          <div class="bar" style="height:70%"></div>
+          <div class="bar" style="height:62%"></div>
+          <div class="bar" style="height:88%"></div>
+          <div class="bar" style="height:75%"></div>
+        </div>
+        <svg width="100%" height="40" viewBox="0 0 280 40" aria-label="Trend sparkline">
+          <polyline
+            fill="none"
+            stroke="#6d8cff"
+            stroke-width="2"
+            points="0,28 40,22 80,30 120,16 160,18 200,8 240,12 280,6"
+          />
+        </svg>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Workspace sections">
+        <button type="button" role="tab" aria-selected="true" data-tab="activity">Activity</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="settings">Settings</button>
+      </div>
+
+      <div id="panel-activity" class="panel card" role="tabpanel">
+        <p style="margin:0 0 12px;color:var(--muted)">Recent product interactions (demo).</p>
+        <div class="row">
+          <button type="button" id="refresh-btn" aria-label="Refresh activity">Refresh</button>
+          <button type="button" id="export-btn" title="Export CSV">Export CSV</button>
+          <label class="toggle">
+            <input type="checkbox" id="live-toggle" role="switch" aria-label="Live updates" />
+            Live updates
+          </label>
+          <label>
+            Range
+            <select id="range" aria-label="Date range">
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>Quarter</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div id="panel-settings" class="panel card hidden" role="tabpanel">
+        <p style="margin:0 0 12px;color:var(--muted)">Workspace preferences (local only).</p>
+        <div class="row">
+          <button type="button" aria-label="Save preferences">Save preferences</button>
+          <a class="btn" href="#" id="docs-link" aria-label="Open documentation">Documentation</a>
+        </div>
+      </div>
+    </main>
+
+    <dialog id="invite-modal" aria-label="Invite modal">
+      <h2 style="margin-top:0;font-family:'Space Grotesk',sans-serif;font-size:18px">Invite teammate</h2>
+      <p style="color:var(--muted);font-size:14px">This is a fake modal for demo clicks. No email is sent.</p>
+      <div class="row">
+        <button type="button" class="primary" id="send-invite" aria-label="Send invite">Send invite</button>
+        <button type="button" id="close-modal" aria-label="Close dialog">Close</button>
+      </div>
+    </dialog>
+
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var sessionId = params.get('session') || '';
+        var statusEl = document.getElementById('status');
+
+        // Derive capture-client path relative to this sample page / deployment base.
+        var scripts = document.getElementsByTagName('script');
+        var samplePath = window.location.pathname;
+        var base = samplePath.replace(/\/sample\/?$/, '/').replace(/\/sample\/index\.html$/, '/');
+        if (!base.endsWith('/')) base += '/';
+        var captureSrc = base + 'capture-client.js';
+
+        function setStatus(text, connected) {
+          statusEl.textContent = text;
+          statusEl.className = connected ? 'connected' : '';
+        }
+
+        if (sessionId) {
+          window.DEMOMAIW_CAPTURE = {
+            sessionId: sessionId,
+            recorderOrigin: window.location.origin,
+            autoConnect: true,
+          };
+          var s = document.createElement('script');
+          s.src = captureSrc;
+          s.onload = function () {
+            setStatus('Companion: script loaded · session ' + sessionId.slice(0, 12), false);
+            var check = setInterval(function () {
+              if (window.demomaiwCapture && window.demomaiwCapture.isConnected()) {
+                setStatus('Companion: connected', true);
+                clearInterval(check);
+              }
+            }, 400);
+          };
+          s.onerror = function () {
+            setStatus('Companion: failed to load capture-client.js', false);
+          };
+          document.head.appendChild(s);
+        } else {
+          setStatus('Companion: open from Enhanced setup with a session id', false);
+        }
+
+        // UI interactions
+        document.querySelectorAll('[data-tab]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            document.querySelectorAll('[data-tab]').forEach(function (b) {
+              b.setAttribute('aria-selected', String(b === btn));
+            });
+            var tab = btn.getAttribute('data-tab');
+            document.getElementById('panel-activity').classList.toggle('hidden', tab !== 'activity');
+            document.getElementById('panel-settings').classList.toggle('hidden', tab !== 'settings');
+          });
+        });
+
+        var modal = document.getElementById('invite-modal');
+        document.getElementById('invite-btn').addEventListener('click', function () {
+          modal.showModal();
+        });
+        document.getElementById('close-modal').addEventListener('click', function () {
+          modal.close();
+        });
+        document.getElementById('send-invite').addEventListener('click', function () {
+          modal.close();
+        });
+        document.getElementById('refresh-btn').addEventListener('click', function () {
+          statusEl.textContent = (statusEl.textContent || '') + '';
+        });
+        document.getElementById('docs-link').addEventListener('click', function (e) {
+          e.preventDefault();
+        });
+      })();
+    </script>
+  </body>
+</html>

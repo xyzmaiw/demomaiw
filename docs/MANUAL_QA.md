@@ -6,7 +6,10 @@ Browser media features cannot be fully automated. Run these on Chrome desktop (a
 
 - [ ] Record a browser tab
 - [ ] Record a window
-- [ ] Stop capture from the browser’s sharing chrome / stop-sharing control
+- [ ] Confirm Enhanced vs Standard prompt appears before sharing
+- [ ] After sharing a tab, confirm countdown auto-starts (no manual Start required)
+- [ ] Confirm floating PiP controls appear on Chromium when supported
+- [ ] Stop capture from browser chrome
 - [ ] Pause and resume during recording
 - [ ] Cancel the screen-selection prompt and see a clear message
 

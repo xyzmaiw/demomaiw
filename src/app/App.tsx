@@ -94,10 +94,12 @@ export default function App() {
 
       {view === 'recording' && (
         <RecordingFlow
+          sessionId={sessionId}
           connection={connection}
           pendingEnhancedClicksRef={pendingEnhancedClicksRef}
           onCancel={goHome}
           onComplete={handleRecordingComplete}
+          onEnsureListening={() => sessionRef.current?.startListening()}
           onRecordingStart={() => {
             recordingActiveRef.current = true
             recordingStartedAtRef.current = performance.now()

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Atmosphere } from '@/components/Atmosphere'
 import { buildCaptureScriptSnippet } from '@/features/enhanced-capture/session'
 import { withBase } from '@/lib/utils'
 import type { CaptureConnection } from '@/types'
@@ -70,19 +71,23 @@ export function EnhancedSetupPage({
   }
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-3xl px-4 py-8">
+    <div className="relative min-h-screen">
+      <Atmosphere intensity="studio" />
+      <div className="relative mx-auto w-full max-w-3xl px-4 py-8 animate-fade-up">
       <Button variant="ghost" size="sm" onClick={onBack} className="mb-6">
         <ArrowLeft className="size-4" />
         Back
       </Button>
 
-      <h1 className="font-display text-3xl font-semibold">Enhanced click capture</h1>
-      <p className="mt-2 text-muted-foreground">
+      <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+        Enhanced click capture
+      </h1>
+      <p className="mt-2 text-muted-foreground text-balance">
         Optional companion. Prefer pasting a console snippet while recording — no install required.
         The recorder still works fully in Standard mode without it.
       </p>
 
-      <Card className="mt-6">
+      <Card className="mt-6 border-white/[0.06] bg-panel/60 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-base">Connection</CardTitle>
           <CardDescription>
@@ -127,7 +132,7 @@ export function EnhancedSetupPage({
         </CardContent>
       </Card>
 
-      <Card className="mt-4 border-primary/30">
+      <Card className="mt-4 border-primary/25 bg-panel/70 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Terminal className="size-4 text-primary" />
@@ -184,7 +189,7 @@ export function EnhancedSetupPage({
         </CardContent>
       </Card>
 
-      <Card className="mt-4">
+      <Card className="mt-4 border-white/[0.06] bg-panel/60 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-base">Install on your product</CardTitle>
           <CardDescription>
@@ -250,6 +255,7 @@ export function EnhancedSetupPage({
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

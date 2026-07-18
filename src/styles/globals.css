@@ -103,6 +103,11 @@
 
   .cinema-vignette {
     background:
+      radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.28) 100%);
+  }
+
+  .cinema-vignette-strong {
+    background:
       radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
   }
 

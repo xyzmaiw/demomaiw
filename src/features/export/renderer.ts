@@ -5,7 +5,7 @@ import type {
   CropState,
   RenderFrameContext,
 } from '@/types'
-import { calculateCenterCrop } from '@/lib/aspect'
+import { calculateContentLayout } from '@/lib/aspect'
 import {
   calculateCardPosition,
   getActiveOverlays,
@@ -182,6 +182,7 @@ export function renderFrame(
     outputWidth,
     outputHeight,
     aspectRatio,
+    frameMode = 'fit',
     crop,
     events,
     reducedMotion,
@@ -198,23 +199,26 @@ export function renderFrame(
   ctx.fillStyle = backgroundColor
   ctx.fillRect(0, 0, outputWidth, outputHeight)
 
-  const cropRect = calculateCenterCrop(
-    { width: sourceWidth, height: sourceHeight },
-    aspectRatio,
-    crop.focalX,
-    crop.focalY,
-  )
-
-  const pad = roundedFrame ? Math.max(8, Math.round(outputWidth * 0.012)) : 0
+  // Minimal padding — avoid eating the page edges
+  const pad = roundedFrame ? Math.max(4, Math.round(outputWidth * 0.006)) : 0
   const contentX = pad
   const contentY = pad
   const contentW = outputWidth - pad * 2
   const contentH = outputHeight - pad * 2
 
   if (roundedFrame) {
-    roundRectPath(ctx, contentX, contentY, contentW, contentH, Math.min(16, pad * 1.5))
+    roundRectPath(ctx, contentX, contentY, contentW, contentH, Math.min(10, pad * 1.2))
     ctx.clip()
   }
+
+  const layout = calculateContentLayout(
+    { width: sourceWidth, height: sourceHeight },
+    { width: contentW, height: contentH },
+    aspectRatio,
+    frameMode,
+    crop.focalX,
+    crop.focalY,
+  )
 
   const overlays = getActiveOverlays(events, timeMs, mediaKind, reducedMotion)
   const zoom = overlays.zoom
@@ -222,9 +226,21 @@ export function renderFrame(
   ctx.save()
   ctx.translate(contentX, contentY)
 
-  if (zoom.active) {
-    const focusPxX = zoom.focusX * contentW
-    const focusPxY = zoom.focusY * contentH
+  // Clip to content box so letterboxing stays clean
+  ctx.beginPath()
+  ctx.rect(0, 0, contentW, contentH)
+  ctx.clip()
+
+  const { sourceRect, destRect } = layout
+
+  const applyZoom = (drawFn: () => void) => {
+    if (!zoom.active) {
+      drawFn()
+      return
+    }
+    // Zoom around the click within the destination content rect
+    const focusPxX = destRect.x + zoom.focusX * destRect.width
+    const focusPxY = destRect.y + zoom.focusY * destRect.height
     const transform = calculateZoomTransform(
       focusPxX,
       focusPxY,
@@ -232,57 +248,34 @@ export function renderFrame(
       contentW,
       contentH,
     )
+    ctx.save()
     ctx.translate(transform.offsetX, transform.offsetY)
     ctx.scale(transform.scale, transform.scale)
+    drawFn()
+    ctx.restore()
   }
 
-  source.draw(
-    ctx,
-    cropRect.x,
-    cropRect.y,
-    cropRect.width,
-    cropRect.height,
-    0,
-    0,
-    contentW,
-    contentH,
-  )
-  ctx.restore()
+  applyZoom(() => {
+    source.draw(
+      ctx,
+      sourceRect.x,
+      sourceRect.y,
+      sourceRect.width,
+      sourceRect.height,
+      destRect.x,
+      destRect.y,
+      destRect.width,
+      destRect.height,
+    )
+  })
 
-  // Overlays in content space (not zoomed with content for readability of rings at click pos)
-  // Actually rings SHOULD be on the zoomed content at the click location.
-  // Re-apply same zoom for overlay geometry in content coordinates.
-  ctx.save()
-  ctx.translate(contentX, contentY)
-
-  const drawOverlaySpace = (drawFn: (scale: number) => void) => {
-    if (zoom.active) {
-      const focusPxX = zoom.focusX * contentW
-      const focusPxY = zoom.focusY * contentH
-      const transform = calculateZoomTransform(
-        focusPxX,
-        focusPxY,
-        zoom.scale,
-        contentW,
-        contentH,
-      )
-      ctx.save()
-      ctx.translate(transform.offsetX, transform.offsetY)
-      ctx.scale(transform.scale, transform.scale)
-      drawFn(transform.scale)
-      ctx.restore()
-    } else {
-      drawFn(1)
-    }
-  }
-
-  drawOverlaySpace(() => {
-    const baseRadius = Math.max(14, Math.min(contentW, contentH) * 0.028)
+  applyZoom(() => {
+    const baseRadius = Math.max(16, Math.min(destRect.width, destRect.height) * 0.032)
     for (const { event, ring } of overlays.rings) {
       drawClickRing(
         ctx,
-        event.x * contentW,
-        event.y * contentH,
+        destRect.x + event.x * destRect.width,
+        destRect.y + event.y * destRect.height,
         ring.scale,
         ring.opacity,
         baseRadius,
@@ -290,7 +283,7 @@ export function renderFrame(
     }
   })
 
-  // Text cards stay screen-fixed (not zoomed) for readability
+  // Text cards stay screen-fixed in the content box for readability
   for (const card of overlays.textCards) {
     drawTextCard(ctx, card.text, card.position, contentW, contentH, 1)
   }

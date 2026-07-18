@@ -654,24 +654,24 @@ export function RecordingFlow({
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative flex h-dvh min-h-0 flex-col overflow-hidden">
       <Atmosphere intensity="capture" />
 
-      <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-5 sm:px-6">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 animate-fade-in">
-          <div>
+      <div className="relative mx-auto flex h-full w-full max-w-[1600px] min-h-0 flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 animate-fade-in">
+          <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-primary/80">
               Capture
             </p>
-            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
               Record a demo
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {phase === 'picking'
                 ? 'Pick a tab, window, or screen in the browser prompt…'
                 : phase === 'countdown'
                   ? 'Countdown started — stay on the shared tab.'
-                  : 'No microphone or system audio is captured.'}
+                  : 'Full source preview — nothing cropped. No mic or system audio.'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -693,7 +693,7 @@ export function RecordingFlow({
         </div>
 
         {(phase === 'countdown' || phase === 'picking') && (
-          <div className="mb-3 rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm text-primary-foreground/90 animate-fade-in">
+          <div className="mb-2 shrink-0 rounded-lg border border-primary/25 bg-primary/10 px-3 py-1.5 text-sm text-primary-foreground/90 animate-fade-in">
             {phase === 'picking'
               ? 'After you share, Chrome may switch tabs. A green countdown appears on the demomaiw tab icon — recording starts automatically.'
               : 'Green tab countdown → red REC icon. Interact on the shared tab. Stop via floating control or the browser’s Stop sharing button.'}
@@ -701,9 +701,10 @@ export function RecordingFlow({
         )}
 
         <StageFrame
-          className="relative min-h-[52vh] flex-1 animate-scale-in"
+          className="relative min-h-0 flex-1 animate-scale-in !rounded-lg sm:!rounded-xl"
           live={phase === 'countdown'}
           recording={phase === 'recording'}
+          vignette="none"
           label={
             phase === 'paused'
               ? 'PAUSED'
@@ -714,7 +715,7 @@ export function RecordingFlow({
         >
           <video
             ref={videoRef}
-            className="absolute inset-0 h-full w-full object-contain"
+            className="absolute inset-0 h-full w-full object-contain bg-black"
             muted
             playsInline
             autoPlay
@@ -738,12 +739,12 @@ export function RecordingFlow({
         </StageFrame>
 
         {error && (
-          <p role="alert" className="mt-3 text-sm text-destructive">
+          <p role="alert" className="mt-2 shrink-0 text-sm text-destructive">
             {error}
           </p>
         )}
 
-        <div className="mt-4 flex flex-wrap items-end gap-4 rounded-xl border border-white/[0.06] bg-panel/60 p-3 backdrop-blur-sm animate-fade-up">
+        <div className="mt-2 flex shrink-0 flex-wrap items-end gap-3 rounded-xl border border-white/[0.06] bg-panel/60 p-2.5 backdrop-blur-sm animate-fade-up sm:gap-4 sm:p-3">
           {(phase === 'recording' || phase === 'paused') && (
             <div className="flex items-center gap-3">
               {phase === 'recording' && <span className="rec-dot" />}

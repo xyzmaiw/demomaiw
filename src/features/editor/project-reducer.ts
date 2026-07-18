@@ -4,6 +4,7 @@ import type {
   DemoEvent,
   ExportSettings,
   ProjectAspectRatio,
+  FrameMode,
   ProjectMedia,
   TextCardEvent,
   FreezeEvent,
@@ -23,7 +24,7 @@ export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
   resolution: 'original',
   fps: 30,
   format: 'webm',
-  roundedFrame: true,
+  roundedFrame: false,
   background: 'solid',
   backgroundColor: '#0a0a0b',
 }
@@ -40,6 +41,7 @@ export function createProject(media: ProjectMedia, name?: string): CaptureProjec
     media,
     events: [],
     aspectRatio: 'original',
+    frameMode: 'fit',
     crop: { ...DEFAULT_CROP },
     exportSettings: {
       ...DEFAULT_EXPORT_SETTINGS,
@@ -52,6 +54,7 @@ export function createProject(media: ProjectMedia, name?: string): CaptureProjec
 export type ProjectAction =
   | { type: 'SET_MEDIA'; media: ProjectMedia }
   | { type: 'SET_ASPECT_RATIO'; aspectRatio: ProjectAspectRatio }
+  | { type: 'SET_FRAME_MODE'; frameMode: FrameMode }
   | { type: 'SET_CROP'; crop: Partial<CropState> }
   | { type: 'SET_EXPORT_SETTINGS'; settings: Partial<ExportSettings> }
   | { type: 'ADD_EVENT'; event: DemoEvent }
@@ -104,6 +107,14 @@ export function projectReducer(
       return {
         ...state,
         project: { ...state.project, aspectRatio: action.aspectRatio },
+      }
+    }
+
+    case 'SET_FRAME_MODE': {
+      if (!state.project) return state
+      return {
+        ...state,
+        project: { ...state.project, frameMode: action.frameMode },
       }
     }
 

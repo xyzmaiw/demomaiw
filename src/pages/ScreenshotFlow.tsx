@@ -107,30 +107,33 @@ export function ScreenshotFlow({ onCancel, onComplete }: ScreenshotFlowProps) {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative flex h-dvh min-h-0 flex-col overflow-hidden">
       <Atmosphere intensity="capture" />
 
-      <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-5 sm:px-6">
-        <div className="mb-4 animate-fade-in">
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-primary/80">
-            Capture
-          </p>
-          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-            Take a screenshot
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Preview the source, then grab a still at full resolution.
-          </p>
+      <div className="relative mx-auto flex h-full w-full max-w-[1600px] min-h-0 flex-1 flex-col px-2 py-2 sm:px-3 sm:py-3">
+        <div className="mb-2 flex flex-wrap items-end justify-between gap-2 animate-fade-in">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-primary/80">
+              Capture
+            </p>
+            <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
+              Take a screenshot
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Full source preview — nothing cropped. Grab a still at native resolution.
+            </p>
+          </div>
         </div>
 
         <StageFrame
-          className="relative min-h-[52vh] flex-1 animate-scale-in"
+          className="relative min-h-0 flex-1 animate-scale-in !rounded-lg sm:!rounded-xl"
           live={phase === 'preview'}
+          vignette="none"
           label={phase === 'picking' ? 'Waiting…' : phase === 'capturing' ? 'Capturing…' : undefined}
         >
           <video
             ref={videoRef}
-            className="absolute inset-0 h-full w-full object-contain"
+            className="absolute inset-0 h-full w-full object-contain bg-black"
             muted
             playsInline
             autoPlay
@@ -143,20 +146,20 @@ export function ScreenshotFlow({ onCancel, onComplete }: ScreenshotFlowProps) {
         </StageFrame>
 
         {error && (
-          <p role="alert" className="mt-3 text-sm text-destructive">
+          <p role="alert" className="mt-2 shrink-0 text-sm text-destructive">
             {error}
           </p>
         )}
 
-        <div className="mt-4 flex flex-wrap items-end gap-4 rounded-xl border border-white/[0.06] bg-panel/60 p-3 backdrop-blur-sm animate-fade-up">
-          <div className="space-y-2">
+        <div className="mt-2 flex shrink-0 flex-wrap items-end gap-3 rounded-xl border border-white/[0.06] bg-panel/60 p-2.5 backdrop-blur-sm animate-fade-up sm:gap-4 sm:p-3">
+          <div className="space-y-1.5">
             <Label htmlFor="ss-aspect">Aspect ratio</Label>
             <Select
               value={aspectRatio}
               onValueChange={(v) => setAspectRatio(v as ProjectAspectRatio)}
               disabled={phase !== 'preview'}
             >
-              <SelectTrigger id="ss-aspect" className="w-40 border-white/10 bg-black/30">
+              <SelectTrigger id="ss-aspect" className="w-44 border-white/10 bg-black/30">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

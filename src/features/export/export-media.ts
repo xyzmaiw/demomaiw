@@ -129,6 +129,7 @@ export function exportVideoWebM(
         project.exportSettings.resolution === 'original'
           ? 'original'
           : project.exportSettings.resolution,
+        project.frameMode,
       )
       canvas.width = size.width
       canvas.height = size.height
@@ -215,6 +216,7 @@ export function exportVideoWebM(
           outputWidth: size.width,
           outputHeight: size.height,
           aspectRatio: project.aspectRatio,
+          frameMode: project.frameMode,
           crop: project.crop,
           events: project.events,
           reducedMotion: false,
@@ -279,6 +281,7 @@ export async function exportScreenshotPng(
     project.exportSettings.resolution === 'original'
       ? 'original'
       : project.exportSettings.resolution,
+    project.frameMode,
   )
 
   const canvas = document.createElement('canvas')
@@ -299,6 +302,7 @@ export async function exportScreenshotPng(
     outputWidth: size.width,
     outputHeight: size.height,
     aspectRatio: project.aspectRatio,
+    frameMode: project.frameMode,
     crop: project.crop,
     events: project.events,
     reducedMotion: true,
@@ -347,6 +351,7 @@ export async function exportCurrentVideoFramePng(
     project.exportSettings.resolution === 'original'
       ? 'original'
       : project.exportSettings.resolution,
+    project.frameMode,
   )
 
   const canvas = document.createElement('canvas')
@@ -369,6 +374,7 @@ export async function exportCurrentVideoFramePng(
     outputWidth: size.width,
     outputHeight: size.height,
     aspectRatio: project.aspectRatio,
+    frameMode: project.frameMode,
     crop: project.crop,
     events: project.events,
     reducedMotion: true,

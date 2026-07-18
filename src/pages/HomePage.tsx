@@ -74,7 +74,7 @@ export function HomePage({ sessionId, onRecord, onScreenshot, onEnhancedSetup }:
           <a
             href={`${withBase('/sample/')}?session=${encodeURIComponent(sessionId)}`}
             target="_blank"
-            rel="noreferrer"
+            rel="opener"
           >
             <CircleDot className="size-3.5" />
             Try with sample product
@@ -98,12 +98,12 @@ export function HomePage({ sessionId, onRecord, onScreenshot, onEnhancedSetup }:
             <div className="space-y-3 text-sm text-muted-foreground">
               <p>
                 A normal screen recording cannot read DOM clicks from another tab. Enhanced mode uses
-                a tiny same-origin companion script that sends safe click metadata via BroadcastChannel
-                or postMessage.
+                a tiny companion that sends safe click metadata via BroadcastChannel or postMessage.
               </p>
               <p>
-                Cross-origin capture targets cannot send click events unless you control that page and
-                install the script with a matching session id.
+                Fastest setup: copy the DevTools console snippet from Enhanced setup and paste it
+                into the product tab you are recording. For cross-origin pages, open the URL from
+                demomaiw first so <code className="text-xs">window.opener</code> can relay messages.
               </p>
               <Button onClick={onEnhancedSetup}>Open Enhanced setup</Button>
             </div>

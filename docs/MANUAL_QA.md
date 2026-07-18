@@ -36,8 +36,9 @@ Browser media features cannot be fully automated. Run these on Chrome desktop (a
 ## Enhanced mode
 
 - [ ] Open Enhanced setup and start listening
-- [ ] Open sample product with session id
-- [ ] See connection detected
+- [ ] Copy the DevTools console snippet
+- [ ] Open sample product from demomaiw and confirm connection (or paste console snippet)
+- [ ] Open a cross-origin URL from Enhanced setup, paste console snippet, confirm connection when opener exists
 - [ ] Record the sample tab and click UI controls
 - [ ] Receive automatic click events with rings, zoom, and editable labels
 - [ ] Disconnect companion and confirm events stop

@@ -66,11 +66,18 @@ In the video editor, use **Save current frame as PNG** to export a still with ov
 ## Automatic click capture (Enhanced mode)
 
 1. Open **Enhanced click capture** and start listening
-2. Open the sample product (or install the companion script on your product) with the same session id
-3. Record that tab and click through the UI
-4. Automatic click rings, subtle zooms (~1.12×), and editable step labels appear in review
+2. Prefer **Paste into DevTools console**: copy the self-contained snippet, open your product (from demomaiw if cross-origin), paste in that tab’s console
+3. Or open the sample product / install the companion script with the same session id
+4. Record that tab and click through the UI
+5. Automatic click rings, subtle zooms (~1.12×), and editable step labels appear in review
 
 Label priority: `aria-label` → visible text → `title` → humanized tag name.
+
+### Console paste (recommended for demos)
+
+Enhanced setup provides a **self-contained console snippet** with your session id baked in. Paste it into the product page DevTools console — no script tag and no network load required.
+
+For **cross-origin** products, open the page from demomaiw first (so `window.opener` exists), then paste. Same-origin pages can use `BroadcastChannel` without an opener.
 
 ### Companion script installation
 
@@ -89,7 +96,7 @@ Serve `/capture-client.js` from this deployment and include:
 
 Remove the script from production if you do not want it permanently included.
 
-Communication uses `BroadcastChannel` (`demomaiw-capture`) when available, plus `window.postMessage`. Same-origin sample testing works best. Do not expect cross-origin messaging to work unless both sides are configured and the browser allows it.
+Communication uses `BroadcastChannel` (`demomaiw-capture`) when available, plus `window.postMessage` to `window.opener` when present. Same-origin sample testing and console-paste workflows work best. Do not expect cross-origin messaging without an opener relationship or an installed companion on a page you control.
 
 ## Local development
 

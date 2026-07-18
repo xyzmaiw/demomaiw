@@ -55,13 +55,18 @@ import {
 import {
   exportCurrentVideoFramePng,
   exportScreenshotPng,
-  exportVideoWebM,
+  exportVideo,
   type ExportController,
 } from '@/features/export/export-media'
 import { CaptureError } from '@/features/capture/display-media'
 import { revokeObjectUrl } from '@/features/capture/recording'
 import { loadImageElement } from '@/features/screenshot/capture-frame'
 import { getAspectLabel } from '@/lib/aspect'
+import {
+  extensionForMimeType,
+  formatLabelForMimeType,
+  selectSupportedMimeType,
+} from '@/lib/capabilities'
 import { downloadBlob, formatFileSize, formatDuration, todayStamp } from '@/lib/utils'
 import type {
   CaptureProject,
@@ -70,6 +75,7 @@ import type {
   DemoEvent,
   ProjectAspectRatio,
   TextCardEvent,
+  VideoExportFormat,
 } from '@/types'
 
 interface EditorPageProps {
@@ -102,6 +108,20 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
 
   const isVideo = project.media.kind === 'video'
   const durationMs = project.media.kind === 'video' ? project.media.durationMs : 0
+  const exportMimePreview =
+    isVideo && project.exportSettings.format !== 'png'
+      ? selectSupportedMimeType(
+          undefined,
+          project.exportSettings.format === 'mp4' ||
+            project.exportSettings.format === 'webm' ||
+            project.exportSettings.format === 'auto'
+            ? project.exportSettings.format
+            : 'auto',
+        )
+      : null
+  const exportFormatButtonLabel = exportMimePreview
+    ? `Export ${formatLabelForMimeType(exportMimePreview)}`
+    : 'Export video'
 
   useEffect(() => {
     onChangeProject(project)
@@ -210,7 +230,7 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
     setLastExportInfo(null)
     pause()
 
-    const controller = exportVideoWebM(project, (p) => {
+    const controller = exportVideo(project, (p) => {
       setExportProgress(Math.round(p.progress * 100))
       setExportLabel(
         p.phase === 'rendering'
@@ -228,10 +248,12 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
 
     try {
       const result = await controller.promise
-      const filename = `demomaiw-demo-${todayStamp()}.webm`
+      const ext = extensionForMimeType(result.mimeType)
+      const label = formatLabelForMimeType(result.mimeType)
+      const filename = `demomaiw-demo-${todayStamp()}.${ext}`
       downloadBlob(result.blob, filename)
-      setLastExportInfo(`${filename} · ${formatFileSize(result.blob.size)}`)
-      toast.success('WebM export complete')
+      setLastExportInfo(`${filename} · ${label} · ${formatFileSize(result.blob.size)}`)
+      toast.success(`${label} export complete`)
     } catch (err) {
       if (err instanceof CaptureError && err.code === 'EXPORT_CANCELLED') {
         toast.message('Export cancelled')
@@ -488,6 +510,38 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
             </Select>
           </div>
 
+          {isVideo && (
+            <div className="space-y-2">
+              <Label>Video format</Label>
+              <Select
+                value={
+                  project.exportSettings.format === 'png' ? 'auto' : project.exportSettings.format
+                }
+                disabled={isExporting}
+                onValueChange={(format) =>
+                  dispatch({
+                    type: 'SET_EXPORT_SETTINGS',
+                    settings: { format: format as VideoExportFormat },
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto (prefer MP4)</SelectItem>
+                  <SelectItem value="mp4">MP4 (H.264)</SelectItem>
+                  <SelectItem value="webm">WebM (AV1 / VP9 / VP8)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {exportMimePreview
+                  ? `This browser will encode ${formatLabelForMimeType(exportMimePreview)}.`
+                  : 'No compatible video codec detected.'}
+              </p>
+            </div>
+          )}
+
           {!isVideo && (
             <div className="space-y-2">
               <Label>PNG background</Label>
@@ -537,7 +591,7 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
             {isVideo && (
               <Button disabled={isExporting} onClick={() => void handleExportVideo()}>
                 <Download className="size-4" />
-                Export WebM
+                {exportFormatButtonLabel}
               </Button>
             )}
             <Button
@@ -551,8 +605,9 @@ export function EditorPage({ project: initialProject, onChangeProject, onExit }:
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Export bakes overlays into the file. WebM uses VP9/VP8 when available. MP4 is not
-            offered in this MVP.
+            Export bakes overlays into the file via MediaRecorder. Capture prefers AV1 → VP9 →
+            H.264/MP4 → VP8 (video-only, no audio). MP4 uses the browser’s native encoder when
+            available — no WASM download required.
           </p>
         </TabsContent>
       </Tabs>

@@ -157,7 +157,7 @@ export function HomePage({ sessionId, onRecord, onScreenshot, onEnhancedSetup }:
       </div>
 
       <p className="absolute bottom-5 left-5 text-xs text-muted-foreground/70 sm:left-8">
-        Chrome & Edge desktop · Best on a wide screen
+        Chrome, Edge, Safari · WebM or MP4 · Best on a wide screen
       </p>
     </div>
   )

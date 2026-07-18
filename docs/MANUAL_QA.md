@@ -31,10 +31,10 @@ Browser media features cannot be fully automated. Run these on Chrome desktop (a
 
 ## Export
 
-- [ ] Export WebM with overlays baked in
+- [ ] Export video (Auto/MP4/WebM) with overlays baked in
 - [ ] Confirm export progress updates
-- [ ] Cancel an in-progress WebM export
-- [ ] Confirm file downloads with a sensible name and non-zero size
+- [ ] Cancel an in-progress video export
+- [ ] Confirm file downloads as `.mp4` or `.webm` with a sensible name and non-zero size
 
 ## Enhanced mode
 

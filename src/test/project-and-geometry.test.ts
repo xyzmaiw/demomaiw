@@ -7,7 +7,12 @@ import {
   resolveFitOutputSize,
   resolvePreviewAspect,
 } from '@/lib/aspect'
-import { selectSupportedMimeType } from '@/lib/capabilities'
+import {
+  extensionForMimeType,
+  formatLabelForMimeType,
+  selectCaptureMimeType,
+  selectSupportedMimeType,
+} from '@/lib/capabilities'
 import { calculateZoomTransform } from '@/features/export/renderer'
 import {
   createManualClickEvent,
@@ -85,9 +90,37 @@ describe('aspect and crop', () => {
 })
 
 describe('mime selection', () => {
-  it('selects the first supported webm mime type', () => {
-    const mime = selectSupportedMimeType((candidate) => candidate.includes('vp8'))
+  it('selects the first supported webm mime type for webm preference', () => {
+    const mime = selectSupportedMimeType(
+      (candidate) => candidate.includes('vp8'),
+      'webm',
+    )
     expect(mime).toBe('video/webm;codecs=vp8')
+  })
+
+  it('prefers MP4 for auto when available', () => {
+    const mime = selectSupportedMimeType(
+      (candidate) => candidate.includes('mp4'),
+      'auto',
+    )
+    expect(mime).toBe('video/mp4;codecs=avc1.42E01E')
+  })
+
+  it('prefers AV1 for capture quality ladder', () => {
+    const mime = selectCaptureMimeType(
+      (candidate) =>
+        candidate.includes('av01') ||
+        candidate.includes('vp9') ||
+        candidate.includes('vp8'),
+    )
+    expect(mime).toBe('video/webm;codecs=av01')
+  })
+
+  it('maps mime types to extensions and labels', () => {
+    expect(extensionForMimeType('video/mp4;codecs=avc1')).toBe('mp4')
+    expect(extensionForMimeType('video/webm;codecs=vp9')).toBe('webm')
+    expect(formatLabelForMimeType('video/webm;codecs=vp9')).toBe('WEBM (VP9)')
+    expect(formatLabelForMimeType('video/mp4;codecs=avc1')).toBe('MP4 (H.264)')
   })
 
   it('returns null when nothing is supported', () => {

@@ -1,6 +1,10 @@
 import { resolveExportSize } from '@/lib/aspect'
 import { computeFreezeTimeline } from '@/lib/animations'
-import { selectSupportedMimeType } from '@/lib/capabilities'
+import {
+  selectSupportedMimeType,
+  suggestVideoBitsPerSecond,
+  type VideoContainerPreference,
+} from '@/lib/capabilities'
 import {
   createImageFrameSource,
   createVideoFrameSource,
@@ -71,7 +75,13 @@ async function ensureVideoReady(video: HTMLVideoElement): Promise<void> {
   })
 }
 
-export function exportVideoWebM(
+function resolveVideoExportPreference(project: CaptureProject): VideoContainerPreference {
+  const format = project.exportSettings.format
+  if (format === 'mp4' || format === 'webm' || format === 'auto') return format
+  return 'auto'
+}
+
+export function exportVideo(
   project: CaptureProject,
   onProgress?: (progress: ExportProgress) => void,
 ): ExportController {
@@ -85,11 +95,18 @@ export function exportVideoWebM(
       throw new CaptureError('INVALID_MEDIA', 'Video export requires a recorded demo.')
     }
 
-    const mimeType = selectSupportedMimeType()
+    const preference = resolveVideoExportPreference(project)
+    const mimeType = selectSupportedMimeType(undefined, preference)
     if (!mimeType) {
       throw new CaptureError(
-        'NO_WEBM_CODEC',
-        'No WebM codec is available for export in this browser.',
+        'NO_VIDEO_CODEC',
+        'No video codec is available for export in this browser.',
+      )
+    }
+    if (preference === 'mp4' && !mimeType.toLowerCase().includes('mp4')) {
+      throw new CaptureError(
+        'NO_MP4_CODEC',
+        'MP4/H.264 export is not available in this browser. Choose Auto or WebM, or try Chrome/Safari.',
       )
     }
 
@@ -159,7 +176,7 @@ export function exportVideoWebM(
       const chunks: BlobPart[] = []
       recorder = new MediaRecorder(canvasStream, {
         mimeType,
-        videoBitsPerSecond: 8_000_000,
+        videoBitsPerSecond: suggestVideoBitsPerSecond(size.width, size.height),
       })
 
       recorder.ondataavailable = (event) => {
@@ -270,6 +287,9 @@ export function exportVideoWebM(
 
   return { cancel, promise }
 }
+
+/** @deprecated Use exportVideo — supports WebM and MP4 via MediaRecorder. */
+export const exportVideoWebM = exportVideo
 
 export async function exportScreenshotPng(
   project: CaptureProject,

@@ -2,7 +2,7 @@
 
 Browser-only product demo recorder for indie developers.
 
-Record a tab, window, or screen. Add click highlights, zooms, and step cards. Export a polished silent WebM — or annotate a screenshot and download a PNG. Everything stays on your device.
+Record a tab, window, or screen. Add click highlights, zooms, and step cards. Export a polished silent WebM or MP4 — or annotate a screenshot and download a PNG. Everything stays on your device.
 
 ![demomaiw editor placeholder](docs/screenshot-placeholder.svg)
 
@@ -14,7 +14,7 @@ Record a tab, window, or screen. Add click highlights, zooms, and step cards. Ex
 - **Manual annotations** by clicking the preview
 - **Enhanced mode** via an optional companion script for automatic click rings, zooms, and step labels
 - **Built-in sample product** for end-to-end Enhanced testing
-- **Export WebM** with baked-in overlays (canvas `captureStream` + MediaRecorder)
+- **Export WebM or MP4** with baked-in overlays (canvas `captureStream` + MediaRecorder; Auto prefers MP4/H.264 when the browser supports it)
 - **Export PNG** for screenshots and current video frames
 - **Privacy-first**: no backend, no accounts, no uploads, no AI
 
@@ -29,10 +29,10 @@ Designed primarily for **Chrome** and **Edge** on desktop.
 Requires:
 
 - `navigator.mediaDevices.getDisplayMedia`
-- `MediaRecorder` with a WebM codec (VP9 preferred, VP8 fallback)
+- `MediaRecorder` with a video codec (capture prefers AV1 → VP9 → H.264/MP4 → VP8; video-only, no audio)
 - `HTMLCanvasElement.captureStream` for polished video export
 
-Firefox/Safari may lack codecs or capture behavior needed for the full loop. The app feature-detects APIs and shows clear errors when unsupported.
+Firefox/Safari may lack codecs or capture behavior needed for the full loop. Safari typically records/exports **MP4 (H.264)**; Chrome/Edge often offer **WebM (VP9/AV1)** and may also support **MP4**. The app feature-detects APIs and shows clear errors when unsupported.
 
 **Honest limitation:** a normal display capture stream does **not** expose DOM click events from another tab. Automatic click capture only works when the recorded page includes the companion script and can communicate with the recorder (same-origin `BroadcastChannel`, or `postMessage` where an opener relationship exists). Cross-origin pages you do not control cannot send Enhanced events.
 
@@ -44,7 +44,7 @@ Firefox/Safari may lack codecs or capture behavior needed for the full loop. The
 4. Choose a browser tab, window, or screen
 5. Chrome may focus the shared tab — recording **auto-starts after a 3-second countdown** (no need to return and press Start). A floating control window opens when Document Picture-in-Picture is available.
 6. Pause / resume / stop from demomaiw, the floating control, or the browser’s stop-sharing bar
-7. Review in the editor, add events, export WebM
+7. Review in the editor, add events, export WebM or MP4
 
 ## Screenshot flow
 
@@ -146,7 +146,7 @@ src/
     capture/           # display media + MediaRecorder
     screenshot/        # frame capture
     editor/            # project reducer, preview canvas, timeline
-    export/            # shared renderer + WebM/PNG export
+    export/            # shared renderer + WebM/MP4/PNG export
     enhanced-capture/  # companion session + transports
   lib/                 # pure helpers (labels, validation, aspect, animations)
   pages/               # Home, record, screenshot, editor, enhanced setup
@@ -160,12 +160,13 @@ Shared canvas rendering powers preview and export so overlays match as closely a
 
 ## Current limitations
 
-- WebM only (no MP4 / GIF)
+- No GIF export; video is WebM and/or MP4 via native MediaRecorder (no ffmpeg.wasm)
 - No project persistence across reloads
 - Enhanced clicks require the companion script and workable same-origin / messaging constraints
 - Freeze markers are experimental
-- Desktop Chrome/Edge recommended; narrow viewports stack the editor with reduced comfort
+- Desktop Chrome/Edge recommended; Safari works when MP4 MediaRecorder is available
 - Video export re-encodes frame-by-frame and takes roughly the media duration
+- Audio is never captured (silent demos only)
 
 ## Manual QA checklist
 

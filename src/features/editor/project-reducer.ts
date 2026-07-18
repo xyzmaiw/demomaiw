@@ -23,7 +23,7 @@ import { createId } from '@/lib/utils'
 export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
   resolution: 'original',
   fps: 30,
-  format: 'webm',
+  format: 'auto',
   roundedFrame: false,
   background: 'solid',
   backgroundColor: '#0a0a0b',
@@ -45,7 +45,7 @@ export function createProject(media: ProjectMedia, name?: string): CaptureProjec
     crop: { ...DEFAULT_CROP },
     exportSettings: {
       ...DEFAULT_EXPORT_SETTINGS,
-      format: media.kind === 'screenshot' ? 'png' : 'webm',
+      format: media.kind === 'screenshot' ? 'png' : 'auto',
     },
     createdAt: Date.now(),
   }

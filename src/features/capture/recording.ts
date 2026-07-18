@@ -1,4 +1,7 @@
-import { selectSupportedMimeType } from '@/lib/capabilities'
+import {
+  selectCaptureMimeType,
+  suggestVideoBitsPerSecond,
+} from '@/lib/capabilities'
 import { CaptureError, stopMediaStream } from '@/features/capture/display-media'
 
 export interface RecordingResult {
@@ -18,11 +21,11 @@ export interface MediaRecorderController {
 export type RecordingState = 'inactive' | 'recording' | 'paused'
 
 export function createMediaRecorder(stream: MediaStream): MediaRecorderController {
-  const mimeType = selectSupportedMimeType()
+  const mimeType = selectCaptureMimeType()
   if (!mimeType) {
     throw new CaptureError(
-      'NO_WEBM_CODEC',
-      'This browser does not support WebM recording. Try Chrome or Edge.',
+      'NO_VIDEO_CODEC',
+      'This browser does not support WebM or MP4 recording. Try Chrome, Edge, or Safari.',
     )
   }
 
@@ -38,9 +41,16 @@ export function createMediaRecorder(stream: MediaStream): MediaRecorderControlle
   let accumulatedMs = 0
   let pauseStartedAt = 0
 
+  const track = stream.getVideoTracks()[0]
+  const settings = track?.getSettings?.() ?? {}
+  const bitsPerSecond = suggestVideoBitsPerSecond(
+    settings.width || 1920,
+    settings.height || 1080,
+  )
+
   const recorder = new MediaRecorder(stream, {
     mimeType,
-    videoBitsPerSecond: 8_000_000,
+    videoBitsPerSecond: bitsPerSecond,
   })
 
   recorder.ondataavailable = (event) => {

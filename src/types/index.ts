@@ -93,10 +93,13 @@ export interface FreezeEvent {
 
 export type DemoEvent = ClickEvent | TextCardEvent | FreezeEvent
 
+/** Video export container preference. Auto prefers MP4 when the browser can encode it. */
+export type VideoExportFormat = 'auto' | 'mp4' | 'webm'
+
 export interface ExportSettings {
   resolution: 'original' | '1920x1080' | '1280x720' | '1080x1080'
   fps: 30
-  format: 'webm' | 'png'
+  format: VideoExportFormat | 'png'
   roundedFrame: boolean
   background: 'solid' | 'transparent'
   backgroundColor: string
@@ -212,9 +215,14 @@ export interface BrowserCapabilities {
   mediaRecorder: boolean
   canvasCaptureStream: boolean
   broadcastChannel: boolean
+  webmAv1: boolean
   webmVp9: boolean
   webmVp8: boolean
   webm: boolean
+  mp4Avc: boolean
+  mp4: boolean
+  preferredMimeType: string | null
+  preferredExportMimeType: string | null
 }
 
 export interface Rect {

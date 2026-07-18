@@ -24,23 +24,44 @@ export function assertCaptureSupported(): void {
   }
 }
 
+/** Prefer sharp UI capture — browsers may ignore some of these. */
+function buildDisplayVideoConstraints(): MediaTrackConstraints & Record<string, unknown> {
+  return {
+    displaySurface: 'browser',
+    width: { ideal: 1920, max: 3840 },
+    height: { ideal: 1080, max: 2160 },
+    frameRate: { ideal: 30, max: 60 },
+  }
+}
+
+function sharpenCaptureTrack(track: MediaStreamTrack): void {
+  try {
+    // Prefer edge/text detail over motion smoothness (screen demos).
+    if ('contentHint' in track) {
+      ;(track as MediaStreamTrack & { contentHint: string }).contentHint = 'detail'
+    }
+  } catch {
+    // ignore
+  }
+
+  // Nudge toward higher resolution when the browser allowed a soft default.
+  void track
+    .applyConstraints({
+      width: { ideal: 1920, max: 3840 },
+      height: { ideal: 1080, max: 2160 },
+      frameRate: { ideal: 30, max: 60 },
+    })
+    .catch(() => undefined)
+}
+
 export async function requestDisplayMedia(options?: {
   preferCurrentTab?: boolean
 }): Promise<MediaStream> {
   assertCaptureSupported()
 
   try {
-    // Prefer a browser tab when the engine supports display-surface hints.
-    // These constraints are optional — do not depend on nonstandard behavior.
-    const videoConstraints: MediaTrackConstraints & {
-      displaySurface?: string
-    } = {
-      displaySurface: 'browser',
-      frameRate: { ideal: 30 },
-    }
-
     const constraints = {
-      video: videoConstraints,
+      video: buildDisplayVideoConstraints(),
       audio: false,
       ...(options?.preferCurrentTab ? { preferCurrentTab: true } : {}),
     } as DisplayMediaStreamOptions
@@ -54,6 +75,7 @@ export async function requestDisplayMedia(options?: {
         'No video track was returned from the capture source.',
       )
     }
+    sharpenCaptureTrack(videoTrack)
     return stream
   } catch (error) {
     if (error instanceof CaptureError) throw error

@@ -12,6 +12,7 @@ import {
   formatLabelForMimeType,
   selectCaptureMimeType,
   selectSupportedMimeType,
+  suggestVideoBitsPerSecond,
 } from '@/lib/capabilities'
 import { calculateZoomTransform } from '@/features/export/renderer'
 import {
@@ -106,14 +107,22 @@ describe('mime selection', () => {
     expect(mime).toBe('video/mp4;codecs=avc1.42E01E')
   })
 
-  it('prefers AV1 for capture quality ladder', () => {
+  it('prefers H.264/MP4 for capture to keep recording responsive', () => {
     const mime = selectCaptureMimeType(
       (candidate) =>
         candidate.includes('av01') ||
         candidate.includes('vp9') ||
+        candidate.includes('avc1') ||
         candidate.includes('vp8'),
     )
-    expect(mime).toBe('video/webm;codecs=av01')
+    expect(mime).toBe('video/mp4;codecs=avc1.42E01E')
+  })
+
+  it('suggests higher bitrates for screen capture', () => {
+    expect(suggestVideoBitsPerSecond(1920, 1080, 'capture')).toBeGreaterThanOrEqual(12_000_000)
+    expect(suggestVideoBitsPerSecond(1920, 1080, 'export')).toBeGreaterThanOrEqual(
+      suggestVideoBitsPerSecond(1920, 1080, 'capture'),
+    )
   })
 
   it('maps mime types to extensions and labels', () => {
